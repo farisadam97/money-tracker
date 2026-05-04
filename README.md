@@ -1,53 +1,62 @@
 # MoneyTracker
 
-Personal finance tracker for Android with OCR receipt scanning, bill splitting, and AI-powered spending insights.
+**Track smart, spend wise.**
 
-## Features
+MoneyTracker is a personal finance mobile application that helps you manage income and expenses, split bills with friends, and get AI-powered insights from your spending history.
 
-- **Transaction Tracking** — Log income and expenses with categories, notes, and dates
-- **Category Management** — 8 default categories + unlimited custom categories
-- **Dashboard** — Balance overview, spending breakdown by category, recent transactions
-- **Bill Splitting** — Scan receipts with OCR, assign items to people, record your share
-- **AI Chat** — Ask questions about your spending in natural language (Text-to-SQL)
-- **Guest Mode** — Try the app without signing in; data stored locally, migrate when ready
+---
+
+## Why MoneyTracker?
+
+Most finance apps are bloated, complex, and look like spreadsheets. MoneyTracker is designed to be simple, beautiful, and fast — focused on what matters: knowing where your money goes.
+
+- **Quick Entry** — Add a transaction in under 5 seconds
+- **Smart Dashboard** — See your balance, spending trends, and category breakdown at a glance
+- **Bill Splitting** — Scan a receipt, assign items to friends, and record your share automatically
+- **Ask AI** — Query your spending in plain English: *"How much did I spend on food last month?"*
+- **Guest Friendly** — Try everything without signing up. Upgrade when you're ready.
+
+---
+
+## Product Roadmap
+
+| Phase | Feature | Status |
+|---|---|---|
+| 1 | Core tracker — transactions, categories, dashboard | In Progress |
+| 2 | Web dashboard + API backend | Planned |
+| 3 | Receipt OCR + bill splitting | Planned |
+| 4 | AI chat for spending insights | Planned |
+| 5 | Public launch — landing page + Google Play | Planned |
+
+---
+
+## Screenshots
+
+*Coming soon*
+
+---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Mobile | React Native + Expo |
-| Styling | NativeWind (Tailwind CSS) |
-| Navigation | Expo Router |
-| State | Zustand + TanStack Query |
-| Backend | Supabase (PostgreSQL, Auth, Storage) |
-| Auth | Google OAuth via Supabase |
-| Web Dashboard | Vite + React (Phase 2) |
-| API | FastAPI (Phase 2) |
-| OCR | Google MLKit + Qwen/GLM API (Phase 3) |
-| AI Chat | Qwen/GLM Text-to-SQL (Phase 4) |
+Built with modern, production-ready tools:
 
-## Build Phases
+- **Mobile** — React Native + Expo
+- **Backend** — Supabase (PostgreSQL, Auth, Storage)
+- **Styling** — NativeWind (Tailwind CSS for React Native)
+- **State** — Zustand + TanStack Query
+- **AI / OCR** — Google MLKit + Qwen/GLM
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | Mobile app + manual transaction tracking | In Progress |
-| 2 | Web dashboard + FastAPI backend | Planned |
-| 3 | OCR receipt scanning + bill splitting | Planned |
-| 4 | AI chat (natural language queries) | Planned |
-| 5 | Landing page + Play Store publish | Planned |
+---
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- Expo CLI (`npm install -g expo-cli`)
-- Android Studio or Expo Go on a physical device
-- Supabase project with Phase 1 tables (see `sql/`)
+- Expo Go (available on Google Play)
+- A Supabase account (free tier works)
 
-### Setup
-
-1. Clone and install dependencies:
+### Installation
 
 ```bash
 git clone https://github.com/farisadam97/money-tracker.git
@@ -55,69 +64,26 @@ cd money-tracker
 npm install
 ```
 
-2. Create a `.env` file in the project root:
+### Configuration
 
-```env
-EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
-```
+This project requires environment variables for backend services. Create a `.env` file based on the provided template and fill in your credentials.
 
-3. Run the SQL migration scripts in Supabase SQL Editor (in order):
-
-```bash
-sql/01_create_phase1_tables.sql
-sql/02_enable_rls.sql
-sql/03_create_rls_policies.sql
-sql/04_seed_master_categories.sql
-```
-
-4. Start the development server:
+### Run
 
 ```bash
 npx expo start
 ```
 
-### Environment Setup (detailed)
+Scan the QR code with Expo Go on your Android device.
 
-For full setup instructions including Supabase, Google OAuth, and database configuration, see [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md).
+---
 
-## Project Structure
+## Contributing
 
-```
-app/                    # Expo Router pages
-  (tabs)/               # Bottom tab navigation
-src/
-  components/           # Reusable UI components
-  constants/            # Design tokens (colors, categories, typography)
-  contexts/             # React contexts (auth)
-  hooks/                # Custom hooks
-  lib/                  # Utilities (Supabase client, guest migration)
-  stores/               # Zustand stores
-  types/                # TypeScript type definitions
-sql/                    # Database migration and seed scripts
-design-draft/           # UI design mockups
-```
+This is a personal project and is not open for contributions at this time.
 
-## Design System
-
-Light mode only with a Plum + Tangerine color palette. See the full design spec in [`MoneyTracker_StitchBrief_v1.1.md`](MoneyTracker_StitchBrief_v1.1.md).
-
-| Role | Color |
-|---|---|
-| Primary (Plum) | `#3D1152` |
-| Accent (Tangerine) | `#FF6B2B` |
-| Background | `#FAF7F5` |
-| Income | `#1A7A4A` |
-| Expense | `#C13333` |
-
-## Documentation
-
-- [`MoneyTracker_PRD_v1.2.md`](MoneyTracker_PRD_v1.2.md) — Full product requirements
-- [`MoneyTracker_StitchBrief_v1.1.md`](MoneyTracker_StitchBrief_v1.1.md) — UI design specification
-- [`PHASE1_CHECKLIST.md`](PHASE1_CHECKLIST.md) — Phase 1 implementation progress
-- [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md) — Phase 0 setup checklist
-- [`sql/README.md`](sql/README.md) — Database schema documentation
+---
 
 ## License
 
-Private project — all rights reserved.
+All rights reserved.
