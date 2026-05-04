@@ -1,50 +1,123 @@
-# Welcome to your Expo app 👋
+# MoneyTracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Personal finance tracker for Android with OCR receipt scanning, bill splitting, and AI-powered spending insights.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Transaction Tracking** — Log income and expenses with categories, notes, and dates
+- **Category Management** — 8 default categories + unlimited custom categories
+- **Dashboard** — Balance overview, spending breakdown by category, recent transactions
+- **Bill Splitting** — Scan receipts with OCR, assign items to people, record your share
+- **AI Chat** — Ask questions about your spending in natural language (Text-to-SQL)
+- **Guest Mode** — Try the app without signing in; data stored locally, migrate when ready
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+| Layer | Technology |
+|---|---|
+| Mobile | React Native + Expo |
+| Styling | NativeWind (Tailwind CSS) |
+| Navigation | Expo Router |
+| State | Zustand + TanStack Query |
+| Backend | Supabase (PostgreSQL, Auth, Storage) |
+| Auth | Google OAuth via Supabase |
+| Web Dashboard | Vite + React (Phase 2) |
+| API | FastAPI (Phase 2) |
+| OCR | Google MLKit + Qwen/GLM API (Phase 3) |
+| AI Chat | Qwen/GLM Text-to-SQL (Phase 4) |
 
-   ```bash
-   npx expo start
-   ```
+## Build Phases
 
-In the output, you'll find options to open the app in a
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Mobile app + manual transaction tracking | In Progress |
+| 2 | Web dashboard + FastAPI backend | Planned |
+| 3 | OCR receipt scanning + bill splitting | Planned |
+| 4 | AI chat (natural language queries) | Planned |
+| 5 | Landing page + Play Store publish | Planned |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Getting Started
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Prerequisites
 
-## Get a fresh project
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli`)
+- Android Studio or Expo Go on a physical device
+- Supabase project with Phase 1 tables (see `sql/`)
 
-When you're ready, run:
+### Setup
+
+1. Clone and install dependencies:
 
 ```bash
-npm run reset-project
+git clone https://github.com/farisadam97/money-tracker.git
+cd money-tracker
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Create a `.env` file in the project root:
 
-## Learn more
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Run the SQL migration scripts in Supabase SQL Editor (in order):
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+sql/01_create_phase1_tables.sql
+sql/02_enable_rls.sql
+sql/03_create_rls_policies.sql
+sql/04_seed_master_categories.sql
+```
 
-## Join the community
+4. Start the development server:
 
-Join our community of developers creating universal apps.
+```bash
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Environment Setup (detailed)
+
+For full setup instructions including Supabase, Google OAuth, and database configuration, see [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md).
+
+## Project Structure
+
+```
+app/                    # Expo Router pages
+  (tabs)/               # Bottom tab navigation
+src/
+  components/           # Reusable UI components
+  constants/            # Design tokens (colors, categories, typography)
+  contexts/             # React contexts (auth)
+  hooks/                # Custom hooks
+  lib/                  # Utilities (Supabase client, guest migration)
+  stores/               # Zustand stores
+  types/                # TypeScript type definitions
+sql/                    # Database migration and seed scripts
+design-draft/           # UI design mockups
+```
+
+## Design System
+
+Light mode only with a Plum + Tangerine color palette. See the full design spec in [`MoneyTracker_StitchBrief_v1.1.md`](MoneyTracker_StitchBrief_v1.1.md).
+
+| Role | Color |
+|---|---|
+| Primary (Plum) | `#3D1152` |
+| Accent (Tangerine) | `#FF6B2B` |
+| Background | `#FAF7F5` |
+| Income | `#1A7A4A` |
+| Expense | `#C13333` |
+
+## Documentation
+
+- [`MoneyTracker_PRD_v1.2.md`](MoneyTracker_PRD_v1.2.md) — Full product requirements
+- [`MoneyTracker_StitchBrief_v1.1.md`](MoneyTracker_StitchBrief_v1.1.md) — UI design specification
+- [`PHASE1_CHECKLIST.md`](PHASE1_CHECKLIST.md) — Phase 1 implementation progress
+- [`SETUP_CHECKLIST.md`](SETUP_CHECKLIST.md) — Phase 0 setup checklist
+- [`sql/README.md`](sql/README.md) — Database schema documentation
+
+## License
+
+Private project — all rights reserved.
