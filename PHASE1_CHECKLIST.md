@@ -79,10 +79,10 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [ ] Verify client connects (test query in app or console)
 
 ### 3b. Auth Context
-- [x] Create `src/contexts/auth-context.tsx` — session state + user object + guest mode flag
+- [x] Create `src/contexts/auth-context.tsx` — session state + user object
 - [x] Create `src/hooks/use-auth.ts` — convenience hook wrapping context
 - [x] Handle session persistence (auto-login on app reopen)
-- [x] Track guest mode state: `isGuest` boolean (stored in AsyncStorage)
+- [ ] ~~Track guest mode state~~ — Removed in PRD v1.3 (guest mode deferred to future)
 
 ### 3c. Google OAuth Flow
 - [x] Configure `expo-auth-session` with Google provider
@@ -91,12 +91,9 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [x] Implement sign-out flow
 - [ ] Test: Google Sign In → session created → sign out → session cleared
 
-### 3d. Guest Mode
-- [x] Implement "Continue as Guest" — sets `isGuest = true` in AsyncStorage
-- [x] Guest users skip Supabase auth entirely
-- [x] Guest data stored locally in AsyncStorage (transactions + categories)
-- [ ] Guest users see "Sign in to sync" prompt on Profile tab
-- [x] Guest → Sign In flow: save local data, authenticate, migrate local data to Supabase
+### 3d. ~~Guest Mode~~ — Removed in PRD v1.3
+- [x] ~~Implement "Continue as Guest"~~ — Deferred to future phase
+- [x] Guest mode code exists in `src/stores/guest-data-store.ts` and `src/lib/migrate-guest.ts` but not required for Phase 1
 
 ---
 
@@ -109,7 +106,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ### 4b. Zustand Stores
 - [ ] Create `src/stores/user-preferences-store.ts` — default currency, etc.
 - [ ] Create `src/stores/filter-store.ts` — transaction filter state (type, categories, date range)
-- [ ] Create `src/stores/guest-data-store.ts` — local-only storage for guest transactions and categories
+- [x] Create `src/stores/guest-data-store.ts` — local-only storage for guest transactions and categories
 - [ ] Persist user preferences to AsyncStorage
 - [ ] Persist guest data to AsyncStorage
 
@@ -139,8 +136,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [ ] Google Sign In button: white bg, border 0.5px `#EAE3F0`, border-radius 10px, full width max 320px, padding 14px
   - Left: Google logo SVG 20px, center: "Continue with Google" 14px weight 500 `#1C0F2E`
   - Loading state: spinner replaces text during OAuth
-- [ ] "Continue as Guest" button: outlined, border 0.5px `#EAE3F0`, border-radius 10px, full width max 320px, padding 14px
-  - Text: "Continue as Guest" 14px weight 500 `#8C7A9B`, no icon
+- [ ] ~~"Continue as Guest" button~~ — Removed in PRD v1.3 (guest mode deferred)
 - [ ] Footer: "By continuing you agree to our Terms of Service and Privacy Policy" 11px `#8C7A9B`
   - "Terms of Service" and "Privacy Policy" underlined, color `#3D1152`
 - [ ] Error state if OAuth fails
@@ -275,16 +271,13 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ## Step 9: Home Dashboard
 
 ### 9a. Dashboard Header
-- [ ] Left: greeting "Good morning," 12px `#8C7A9B`, below it "[First Name]" 18px weight 500 `#1C0F2E`
-- [ ] Right: BellRing icon 22px `#8C7A9B` — placeholder, no action Phase 1
-- [ ] Period chip: "This Month" pill, bg `#EDE0F5`, text `#3D1152`, 12px, padding 4px 14px, border-radius 20px (not tappable Phase 1)
+- [ ] Period: "This Month" — fixed for Phase 1, no selector
 
-### 9b. Available Balance Card
-- [ ] Create `src/components/home/balance-card.tsx` — full width card
-- [ ] Card: bg `#3D1152`, border-radius 14px, padding 20px
-- [ ] Label "AVAILABLE BALANCE" 11px weight 500 `rgba(255,255,255,0.7)` letter-spacing 0.5px
-- [ ] Amount 36px weight 500 `#FFFFFF` with currency symbol
-- [ ] Bottom row: Income (TrendingUp icon `#1A7A4A` + label + amount in white) left, Expenses (TrendingDown icon `#C13333` + label + amount in white) right
+### 9b. Summary Cards
+- [ ] Create `src/components/home/summary-cards.tsx` — 3 cards at top
+- [ ] Total Income card — green `#1A7A4A` accent
+- [ ] Total Expense card — red `#C13333` accent
+- [ ] Balance card — plum `#3D1152`
 
 ### 9c. Spending by Category
 - [ ] Create `src/components/home/spending-by-category.tsx`
@@ -356,13 +349,11 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ### 11a. Profile Screen
 - [ ] Header: title "Profile" 20px weight 500 `#1C0F2E`
 - [ ] User card (white card, border-radius 12px, padding 16px):
-  - **Guest users:** User icon 64px bg `#EDE0F5` `#3D1152`, name "Guest", "Sign in to sync your data" 13px `#FF6B2B` with ChevronRight → Login
   - **Signed-in users:** Circle avatar 64px from Google photo, fallback initials bg `#EDE0F5` text `#3D1152`
   - Display name 16px weight 500 `#1C0F2E`, email 13px `#8C7A9B`
 - [ ] Preferences section: label "Preferences" 12px weight 500 `#8C7A9B`
   - White card with row: Globe icon `#8C7A9B`, "Default Currency" `#1C0F2E`, current value e.g. "USD" `#3D1152`, ChevronRight `#8C7A9B`
 - [ ] Account section: label "Account" 12px weight 500 `#8C7A9B`
-  - **Guest:** LogIn icon `#3D1152`, "Sign In" 14px `#3D1152` → Login screen
   - **Signed-in:** LogOut icon `#C13333`, "Sign Out" 14px `#C13333` → confirm dialog
 - [ ] Footer: "MoneyTracker v1.0.0" 11px `#8C7A9B` centered at bottom
 
@@ -403,8 +394,7 @@ Before marking Phase 1 complete, verify each:
 
 - [ ] Google OAuth login works (login screen → dashboard)
 - [ ] Splash screen auto-redirects correctly (with/without session)
-- [ ] "Continue as Guest" works — app usable without sign-in, data stored locally
-- [ ] Guest user sees "Sign in to sync" on Profile, can sign in to migrate data
+- [ ] ~~"Continue as Guest" works~~ — Removed in PRD v1.3
 - [ ] Can create, edit, delete transactions
 - [ ] Can create, edit, delete custom categories
 - [ ] Master categories visible, read-only (no edit/delete affordance)
@@ -427,5 +417,5 @@ Before marking Phase 1 complete, verify each:
 ---
 
 *Created: April 2026*
-*Updated: April 2026 — merged design draft: guest login, balance-first dashboard, merchant-style transaction rows. Aligned with PRD v1.3 + StitchBrief v1.2*
+*Updated: May 2026 — aligned with PRD v1.3 (guest mode removed, dashboard simplified, AI agent expanded). Guest mode code retained but not required for Phase 1.*
 *For: MoneyTracker App Phase 1 Implementation*

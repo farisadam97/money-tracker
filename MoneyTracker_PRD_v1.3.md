@@ -1,7 +1,7 @@
 # MoneyTracker — Product Requirements Document
 
-**Version 1.3 | April 2026**
-Personal Finance Tracker with OCR Split Bill & AI Chat
+**Version 1.3 | March 2026**
+Personal Finance Tracker with OCR Split Bill & AI Chat Agent
 
 ---
 
@@ -33,7 +33,8 @@ MoneyTracker is a personal finance mobile application for Android with a compani
 | Auth | Supabase Auth + Google OAuth | JWT based |
 | Storage | Supabase Storage | Receipt images |
 | OCR | Google MLKit (offline) / Qwen GLM API | Fallback to API if needed |
-| AI Chat | Qwen/GLM via Alibaba Cloud | Text-to-SQL approach |
+| AI Chat | Qwen/GLM via Alibaba Cloud | Multi-tool agent, Text-to-SQL |
+| Edge Functions | Supabase Edge Functions (TypeScript/Deno) | AI chat agent handler |
 | Analytics | PostHog Cloud | Free tier |
 | Monitoring | Sentry | Error tracking, free tier |
 | Hosting | Coolify on Alibaba VPS | FastAPI containers |
@@ -123,6 +124,26 @@ Managed entirely by Supabase Auth. All other tables reference `user_id` from thi
 | transaction_id | uuid FK nullable | NULL until recorded to tracker |
 | amount | numeric | Assigned amount for this person |
 
+### chat_sessions *(added Phase 4)*
+
+| Column | Type | Description |
+|---|---|---|
+| id | uuid PK | Primary key |
+| user_id | uuid FK | References auth.users |
+| messages_json | jsonb | Full message history array |
+| created_at | timestamptz | Session creation timestamp |
+| updated_at | timestamptz | Last message timestamp |
+
+### user_agent_prefs *(added Phase 4)*
+
+| Column | Type | Description |
+|---|---|---|
+| user_id | uuid PK FK | References auth.users — one row per user |
+| default_currency | text | User's preferred currency |
+| common_categories | jsonb | Most used category IDs + names |
+| spending_patterns | jsonb | Derived patterns e.g. avg monthly food spend |
+| updated_at | timestamptz | Last updated timestamp |
+
 ---
 
 ## 4. Build Phases
@@ -132,7 +153,7 @@ Managed entirely by Supabase Auth. All other tables reference `user_id` from thi
 | 1 | RN mobile app + Supabase, manual transaction entry + categories | **Start Here** |
 | 2 | Vite web dashboard + FastAPI backend + sync | After Phase 1 |
 | 3 | OCR + split bill feature | After Phase 2 |
-| 4 | AI chat (Text-to-SQL) | After Phase 3 |
+| 4 | AI Chat Agent (multi-tool, memory, proactive insights) | After Phase 3 |
 | 5 | Landing page + Play Store publish | After Phase 4 |
 | 6 | Budgets feature (optional) | Future |
 
@@ -145,23 +166,22 @@ Managed entirely by Supabase Auth. All other tables reference `user_id` from thi
 ### 5.1 Goals
 - Working Android app published via Expo
 - Google OAuth login via Supabase
-- Guest mode — users can try the app without signing in (local-only data, no sync)
 - Full transaction CRUD (income and expense)
 - Category management (master + custom)
 - Transaction list with search and filter
-- Balance-first dashboard with income/expense summary and monthly spending breakdown
+- Basic summary dashboard (total income, expense, balance — this month only)
 
 ### 5.2 Screens & Navigation
 
 #### Auth Flow
 - **Splash Screen** — app logo, auto-redirect if session exists
-- **Login Screen** — Google Sign In button via Supabase OAuth, "Continue as Guest" button for local-only mode
+- **Login Screen** — Google Sign In button via Supabase OAuth
 
 #### Main App — Bottom Tab Navigation (5 tabs)
 
 | Tab | Screen | Type | Description |
 |---|---|---|---|
-| 1 — Home | Dashboard | Screen | Greeting header with user name. Large "Available Balance" card at top with currency. Income and expense summary below. Spending by category list with progress bars. Recent 5 transactions. Tap transaction → Bottom Sheet Detail. |
+| 1 — Home | Dashboard | Screen | Summary cards: Income, Expense, Balance (this month). Spending by category list. Recent 5 transactions. Tap transaction → Bottom Sheet Detail. |
 | 2 — Transactions | Transaction List | Screen | Full list with search bar, filter by type/category/date range. Infinite scroll. Tap item → Bottom Sheet Detail. |
 | 3 — Add (FAB) | Add Transaction | Full Screen | Dedicated screen: large amount input, income/expense toggle, category picker grid, date picker, currency selector, note field, save button. |
 | 4 — Categories | Category List | Screen | Master categories section (view only). My categories section (CRUD). Add button → Bottom Sheet Form. |
@@ -188,19 +208,17 @@ Tab: Profile → (no sub-screens)
 ### 5.3 Screen Detail
 
 #### Dashboard (Home Tab)
-- Header: "Good morning," greeting + user's first name + BellRing icon (placeholder)
-- Period chip: "This Month" — fixed for Phase 1, no selector
-- **Available Balance card**: large card with "AVAILABLE BALANCE" label, big amount display with currency symbol, plum tint background
-- **Income & Expense row**: two smaller cards side by side below balance — Income (green) and Expenses (red) with amounts
-- Spending by category: list with category icon, name, amount, percentage progress bar
-- Recent transactions: last 5, each row shows category icon circle, name/merchant, amount, time and date
+- Period: This Month — fixed for Phase 1, no selector
+- 3 summary cards at top: Total Income (green), Total Expense (red), Balance (plum)
+- Spending by category: list with category icon, name, amount, percentage bar
+- Recent transactions: last 5, each row shows icon, category, note, amount, date
 - Tap any transaction row opens Transaction Bottom Sheet
 
 #### Transaction List (Transactions Tab)
 - Search bar at top: search by note text
 - Filter bar below search: active filters shown as chips, tap to open Filter Bottom Sheet
 - Grouped by date (Today, Yesterday, then date headers)
-- Each row: colored circle avatar with Lucide category icon, name/merchant as primary label, amount (red/green), time and date below amount
+- Each row: colored circle avatar with Lucide category icon, category name, note preview, amount (red/green), date
 - Infinite scroll with loading indicator
 - Empty state illustration when no transactions
 
@@ -222,7 +240,6 @@ Tab: Profile → (no sub-screens)
 
 #### Profile Tab
 - User avatar (from Google account), display name, email
-- Guest users see "Sign in to sync" prompt instead
 - Default currency preference selector
 - Logout button with confirmation dialog
 - App version number at bottom
@@ -349,37 +366,348 @@ GET    /summary
 
 ---
 
-## 8. Phase 4 — AI Chat (Text-to-SQL)
+## 8. Phase 4 — AI Chat Agent
 
-### 8.1 Goals
-- Natural language chat interface to query transaction history
-- AI converts question to SQL, runs against user's data, returns formatted answer
-- Results include clickable transaction cards linking to detail page
+### 8.1 Overview
 
-### 8.2 Example Queries
-- "Do I have any transactions in May around $300 for food?"
-- "How much did I spend on transport last month?"
-- "What is my biggest expense this year?"
-- "Show me all income transactions from last quarter"
+A conversational AI agent that lets users query their finances in natural language and receive intelligent, actionable answers. Goes beyond basic Text-to-SQL by adding multi-tool execution, persistent memory, and proactive weekly insights.
 
-### 8.3 Technical Approach
+**Why this approach over basic Text-to-SQL:**
+- Multi-tool agent can combine multiple queries in a single response
+- Memory means the agent improves with usage, remembering user preferences
+- Proactive notifications add value without user-initiated queries
+- Same agent architecture scales naturally — OCR tool, budgets tool, predictions can be added in future phases
 
-Text-to-SQL is the correct approach for this use case. Transactions are structured data, not unstructured text. Vector search / RAG is unnecessary complexity here.
+**Cost estimate:** ~$0.50–5/month depending on usage via Qwen/GLM on Alibaba Cloud.
 
-| Step | Description |
+### 8.2 Core Capabilities
+
+| Capability | Description |
 |---|---|
-| 1. User sends question | Natural language input in chat UI |
-| 2. FastAPI receives question | Adds user context and schema to prompt |
-| 3. Qwen/GLM generates SQL | LLM converts to safe SELECT query scoped to user_id |
-| 4. SQL executed on Supabase | Returns raw transaction rows |
-| 5. LLM formats response | Converts rows to natural language answer with transaction IDs |
-| 6. Frontend renders | Text answer + clickable transaction cards with deep link |
+| Natural language queries | "How much did I spend on food this month?" → SQL → formatted answer |
+| Multi-tool execution | Agent selects and chains tools: search_transactions, get_summary, create_transaction |
+| Persistent memory | Remembers conversation context and user preferences across sessions |
+| Proactive insights | Weekly push notifications about spending trends and anomalies |
+| Suggestion chips | Pre-built query suggestions shown in UI for common questions |
+| Clickable results | Transaction results render as tappable cards with deep links |
+| Safe execution | SQL validation layer — SELECT-only, user-scoped, forbidden keyword filter |
 
-#### Safety Rules for Generated SQL
-- Only SELECT queries allowed — no INSERT/UPDATE/DELETE
-- Always scoped to authenticated `user_id`
-- Query timeout enforced
-- SQL validated before execution
+### 8.3 Example Queries
+- "How much did I spend on food this month?"
+- "Do I have any transactions in May around $300?"
+- "What is my biggest expense this year?"
+- "Show me all income from last quarter"
+- "Compare my spending this month vs last month"
+- "Am I spending more on transport lately?"
+
+### 8.4 Architecture
+
+```
+Mobile Chat UI (React Native)
+        ↓ HTTPS + JWT
+Supabase Edge Function (TypeScript/Deno)
+        ↓
+  ┌─────────────────────────────────┐
+  │         Agent Orchestrator      │
+  │  - Parse user intent            │
+  │  - Select tool(s)               │
+  │  - Build prompt with context    │
+  │  - Call Qwen/GLM                │
+  │  - Execute validated SQL        │
+  │  - Format response              │
+  └─────────────────────────────────┘
+        ↓                    ↓
+Supabase PostgreSQL    Qwen/GLM API
+(execute SQL)          (Alibaba Cloud)
+```
+
+**Why Supabase Edge Function over FastAPI for the agent:**
+- Runs closer to the database — lower latency for SQL execution
+- Shares the same Supabase JWT auth automatically
+- Keeps AI logic separate from REST API concerns in FastAPI
+- FastAPI still handles all standard CRUD endpoints
+
+### 8.5 Agent Tools
+
+Three tools available in Phase 4.1, expandable in later sub-phases.
+
+#### Tool 1: `search_transactions`
+```typescript
+// Input
+{
+  filters: {
+    date_from?: string,       // ISO date
+    date_to?: string,
+    category_ids?: string[],
+    type?: 'income' | 'expense',
+    amount_min?: number,
+    amount_max?: number,
+    keyword?: string          // searches note field
+  },
+  limit?: number              // default 20, max 100
+}
+
+// Output
+{
+  transactions: Transaction[],
+  total_count: number,
+  total_amount: number
+}
+```
+
+#### Tool 2: `get_summary`
+```typescript
+// Input
+{
+  period: 'this_month' | 'last_month' | 'this_year' | 'last_year' | 'custom',
+  date_from?: string,
+  date_to?: string,
+  group_by?: 'category' | 'type' | 'week' | 'month'
+}
+
+// Output
+{
+  total_income: number,
+  total_expense: number,
+  balance: number,
+  breakdown: { label: string, amount: number, percentage: number }[]
+}
+```
+
+#### Tool 3: `create_transaction` *(Phase 4.2+)*
+```typescript
+// Input
+{
+  amount: number,
+  type: 'income' | 'expense',
+  category_id: string,
+  note?: string,
+  date?: string,              // default today
+  currency?: string           // default user preference
+}
+
+// Output
+{
+  transaction: Transaction,
+  confirmation_message: string
+}
+```
+
+> **Note:** `create_transaction` requires explicit user confirmation in the UI before execution. The agent proposes the transaction, user taps "Confirm", then it executes.
+
+### 8.6 Supabase Edge Function — Technical Spec
+
+**File:** `supabase/functions/chat-agent/index.ts`
+
+**High-level flow:**
+```typescript
+Deno.serve(async (req) => {
+  // 1. Verify Supabase JWT from Authorization header
+  const user = await verifyJWT(req)
+
+  // 2. Parse request body
+  const { message, session_id } = await req.json()
+
+  // 3. Load chat history from chat_sessions (last 20 messages)
+  const history = await loadChatHistory(session_id, user.id)
+
+  // 4. Load user agent preferences
+  const prefs = await loadUserPrefs(user.id)
+
+  // 5. Build system prompt with schema + user context
+  const systemPrompt = buildSystemPrompt(prefs)
+
+  // 6. Call Qwen/GLM with tools + history + new message
+  const agentResponse = await callQwenWithTools(systemPrompt, history, message)
+
+  // 7. If tool_call in response → validate → execute → call LLM again with result
+  const finalResponse = await executeToolLoop(agentResponse, user.id)
+
+  // 8. Save updated history to chat_sessions
+  await saveChatHistory(session_id, user.id, message, finalResponse)
+
+  // 9. Return formatted response
+  return Response.json({
+    message: finalResponse.text,
+    transaction_ids: finalResponse.transaction_ids,
+    suggested_actions: finalResponse.suggested_actions
+  })
+})
+```
+
+**System prompt structure:**
+```
+You are a personal finance assistant for MoneyTracker.
+
+User context:
+- Default currency: {currency}
+- Common categories: {categories}
+- Spending patterns: {patterns}
+
+Database schema:
+{transactions table schema}
+{categories table schema}
+
+Rules:
+- Only generate SELECT queries
+- Always filter by user_id = '{user_id}'
+- Never use: INSERT, UPDATE, DELETE, DROP, ALTER, GRANT, TRUNCATE
+- Return transaction IDs for any referenced transactions
+- Keep answers concise and friendly
+- Use the user's currency in all amounts
+```
+
+### 8.7 SQL Safety Validation Layer
+
+All SQL generated by the LLM passes through a validation layer before execution. Non-negotiable.
+
+```typescript
+function validateSQL(sql: string, userId: string): ValidationResult {
+  const upperSQL = sql.toUpperCase().trim()
+
+  // Rule 1: Must start with SELECT
+  if (!upperSQL.startsWith('SELECT')) {
+    return { valid: false, reason: 'Only SELECT queries allowed' }
+  }
+
+  // Rule 2: Forbidden keywords
+  const forbidden = [
+    'INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER',
+    'GRANT', 'TRUNCATE', 'EXECUTE', 'EXEC', '--', ';--'
+  ]
+  for (const keyword of forbidden) {
+    if (upperSQL.includes(keyword)) {
+      return { valid: false, reason: `Forbidden keyword: ${keyword}` }
+    }
+  }
+
+  // Rule 3: Must contain user_id filter
+  if (!sql.includes(userId)) {
+    return { valid: false, reason: 'Missing user_id scope' }
+  }
+
+  return { valid: true }
+}
+```
+
+**Additional safeguards:**
+- Query timeout: 5 seconds max
+- Result row limit: 500 rows max regardless of query
+- Rate limiting: 30 chat messages per user per hour
+- All validation failures logged to Sentry
+
+### 8.8 React Native Chat UI
+
+**Placement:** New 6th tab "Chat" (MessageCircle icon) added to bottom navigation, or accessible via FAB on Dashboard. Final placement decided during Phase 4 UI design.
+
+**Chat screen layout:**
+```
+Header: "AI Assistant"               [Clear history icon]
+────────────────────────────────────────
+Suggestion chips (horizontal scroll):
+[This month summary] [Biggest expense] [Food spending] [Compare months]
+────────────────────────────────────────
+Chat messages (scrollable, newest at bottom):
+
+  [User bubble — right aligned, bg #EDE0F5]
+  "How much did I spend on food this month?"
+
+  [Agent typing indicator — left, animated 3 dots]
+
+  [Agent text bubble — left, white card]
+  "You spent $342 on Food & Drink this month
+   across 18 transactions — 28% of total expenses."
+
+  [Transaction cards — tappable, left aligned]
+  ┌──────────────────────────────┐
+  │ 🍜 Food & Drink    −$24.00  │  → tap → Transaction Detail
+  │ Lunch at warung    Jan 17   │
+  └──────────────────────────────┘
+
+  [Confirm action card — for create_transaction]
+  ┌──────────────────────────────┐
+  │ Record this transaction?     │
+  │ −$24 · Food & Drink · Today  │
+  │  [Cancel]      [Confirm ✓]   │
+  └──────────────────────────────┘
+
+────────────────────────────────────────
+[ Type a question...              ] [↑]
+```
+
+**Message types:**
+
+| Type | Alignment | Style |
+|---|---|---|
+| `user` | Right | bg `#EDE0F5`, text `#1C0F2E`, border-radius 12px 12px 2px 12px |
+| `agent_text` | Left | white card, text `#1C0F2E`, border-radius 2px 12px 12px 12px |
+| `agent_transactions` | Left | list of tappable transaction cards (same style as Transaction List rows) |
+| `agent_confirm` | Left | white card, action title, transaction preview, Cancel + Confirm buttons |
+| `agent_loading` | Left | animated 3-dot typing indicator, bg white card |
+| `agent_error` | Left | error text `#C13333` + "Retry" button |
+
+**Default suggestion chips:**
+- "This month summary"
+- "Biggest expense this month"
+- "Food spending trend"
+- "Compare this vs last month"
+- "Recent transactions"
+
+Chips update based on `user_agent_prefs.common_categories` after Phase 4.2.
+
+### 8.9 Persistent Memory — Phase 4.2
+
+**Chat history (`chat_sessions`):**
+- Each session stored as `messages_json` array
+- Format: `[{ role: 'user' | 'assistant', content: string, timestamp: string }]`
+- Last 20 messages included in each LLM call as context window
+- Sessions older than 30 days: `messages_json` cleared, metadata row kept
+
+**User agent preferences (`user_agent_prefs`):**
+- Updated automatically after each chat session
+- `common_categories` — top 5 categories by transaction count, derived from DB
+- `spending_patterns` — avg monthly spend per category, recomputed weekly
+- Used to personalise system prompt and suggestion chips
+- Never exposed directly to user — internal agent use only
+
+### 8.10 Proactive Insights — Phase 4.3
+
+**Trigger:** Supabase `pg_cron` job runs every Monday at 9:00 AM (UTC, adjust for user timezone stored in `user_agent_prefs`).
+
+**Insight types:**
+
+| Insight | Condition | Example notification |
+|---|---|---|
+| Weekly summary | Every week | "Last week: $240 spent across 12 transactions" |
+| Overspend alert | Category > 120% of 4-week rolling average | "Food spending is 40% higher than usual this week" |
+| Unusual transaction | Single transaction > 3× category average | "Large transport expense detected: $85 on Jan 17" |
+| Positive trend | Category spend down > 20% vs previous month | "Great job — transport spending down 25% this month" |
+
+**Delivery:** Expo push notifications via `expo-notifications`. User can disable in Profile settings.
+
+**Cron job flow:**
+```
+pg_cron triggers weekly → Supabase Edge Function
+→ Query each user's transactions from past 7 days
+→ Compare against 4-week averages in user_agent_prefs
+→ Generate insight text via Qwen/GLM
+→ Send push notification via Expo Push API
+→ Update user_agent_prefs.spending_patterns
+```
+
+### 8.11 Implementation Sub-phases
+
+| Sub-phase | Scope |
+|---|---|
+| 4.1 | Core chat: 3 tools (search + summary + create), SQL generation, basic UI, safety layer |
+| 4.2 | Memory: chat history persistence, user_agent_prefs, personalised suggestions |
+| 4.3 | Proactive: weekly cron insights, push notifications, spending pattern detection |
+
+### 8.12 Future Agent Tools (Post Phase 4)
+- `scan_receipt` — OCR tool bridging Phase 3 + Phase 4 agent
+- `set_budget` — budget tool when Phase 6 is built
+- `predict_spending` — ML-based forecast from spending history
+- `export_data` — generate CSV/PDF from natural language request
 
 ---
 
@@ -524,9 +852,7 @@ Current Alibaba Cloud VPS is 1GB RAM / 1 CPU. Only FastAPI + lightweight Postgre
 - Budgets feature is intentionally deferred to Phase 6.
 - No dark mode. Light mode only for all phases.
 - Color palette is locked: Plum `#3D1152` + Tangerine `#FF6B2B`. Do not deviate without updating this document.
-- Guest mode provides local-only data storage. Guest users can sign in later to migrate data to Supabase.
-- Guest data is stored in AsyncStorage. No database tables needed for guest mode.
 
 ---
 
-*End of Document — MoneyTracker PRD v1.3 — April 2026*
+*End of Document — MoneyTracker PRD v1.3 — March 2026*
