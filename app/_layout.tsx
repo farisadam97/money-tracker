@@ -6,14 +6,21 @@ import { AuthProvider } from "@/src/contexts/auth-context";
 import { QueryProvider } from "@/src/providers/query-provider";
 
 export const unstable_settings = {
-  anchor: "(tabs)",
+  anchor: "splash",
 };
 
 export default function RootLayout() {
   return (
     <AuthProvider>
       <QueryProvider>
-        <Stack>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "#FAF7F5" },
+          }}
+        >
+          <Stack.Screen name="splash" />
+          <Stack.Screen name="login" />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="dark" />
