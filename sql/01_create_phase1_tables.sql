@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   date DATE NOT NULL DEFAULT CURRENT_DATE,
 
   -- Source tracking
-  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'split_bill')),
+  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'split_bill', 'email')),
 
   -- Timestamps
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

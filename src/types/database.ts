@@ -48,7 +48,7 @@ export interface Database {
           type: "income" | "expense";
           note: string | null;
           date: string;
-          source: "manual" | "split_bill";
+          source: "manual" | "split_bill" | "email";
           created_at: string;
           updated_at: string;
         };
@@ -61,7 +61,7 @@ export interface Database {
           type: "income" | "expense";
           note?: string | null;
           date?: string;
-          source?: "manual" | "split_bill";
+          source?: "manual" | "split_bill" | "email";
           created_at?: string;
           updated_at?: string;
         };
@@ -74,7 +74,7 @@ export interface Database {
           type?: "income" | "expense";
           note?: string | null;
           date?: string;
-          source?: "manual" | "split_bill";
+          source?: "manual" | "split_bill" | "email";
           created_at?: string;
           updated_at?: string;
         };
@@ -95,4 +95,4 @@ export type TransactionInsert = Database["public"]["Tables"]["transactions"]["In
 export type TransactionUpdate = Database["public"]["Tables"]["transactions"]["Update"];
 
 export type TransactionType = "income" | "expense";
-export type TransactionSource = "manual" | "split_bill";
+export type TransactionSource = "manual" | "split_bill" | "email";
