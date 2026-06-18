@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 
 import { supabase } from "@/src/lib/supabase";
+import { usePendingWritesStore } from "@/src/stores/pending-writes-store";
 import type {
   CategoryInsert,
   CategoryRow,
@@ -49,13 +50,24 @@ export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CategoryInsert) => {
-      const { data, error } = await supabase
-        .from("categories")
-        .insert(input as never)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as CategoryRow;
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .insert(input as never)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as CategoryRow;
+      } catch (err) {
+        // Offline or network error: enqueue for later sync
+        const enqueue = usePendingWritesStore.getState().enqueue;
+        enqueue({
+          table: "categories",
+          operation: "insert",
+          payload: input,
+        });
+        throw err;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   });
@@ -65,14 +77,24 @@ export function useUpdateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...patch }: CategoryUpdate & { id: string }) => {
-      const { data, error } = await supabase
-        .from("categories")
-        .update(patch as never)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as CategoryRow;
+      try {
+        const { data, error } = await supabase
+          .from("categories")
+          .update(patch as never)
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as CategoryRow;
+      } catch (err) {
+        usePendingWritesStore.getState().enqueue({
+          table: "categories",
+          operation: "update",
+          payload: { id, ...patch },
+          tempId: id,
+        });
+        throw err;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   });
@@ -82,9 +104,19 @@ export function useDeleteCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) throw error;
-      return id;
+      try {
+        const { error } = await supabase.from("categories").delete().eq("id", id);
+        if (error) throw error;
+        return id;
+      } catch (err) {
+        usePendingWritesStore.getState().enqueue({
+          table: "categories",
+          operation: "delete",
+          payload: id,
+          tempId: id,
+        });
+        throw err;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   });

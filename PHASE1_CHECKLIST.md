@@ -687,3 +687,14 @@ These are not bugs or tech debt — they're design decisions worth reconsidering
 - **Recommendation:** Add basic CSV export in Phase 1 Profile tab before Play Store submission. ~30 lines of code using a simple CSV builder + `expo-sharing` or `expo-file-system`.
 - **Impact:** Legal compliance for Phase 5 launch; unblocks Play Store submission.
 - **Decision needed:** Whether to add to Phase 1 scope or accept launch delay until Phase 2.
+
+### AR-7: Offline-first data layer (Option 1: TanStack Query persist + write queue)
+
+- **Issue:** Finance apps are used in low-connectivity places (markets, parking, food courts). Without offline support, `INSERT`/`UPDATE` calls fail immediately and data is lost. The app also can't render previously-fetched lists when offline.
+- **Recommendation:** Implement lightweight offline-first using:
+  - **Reads:** `@tanstack/query-async-storage-persister` persists the query cache to AsyncStorage so lists render from cache even with no connection. 24h max age.
+  - **Writes:** Custom Zustand store (`pending-writes-store.ts`) holds failed mutations in AsyncStorage. Dedupes by `tempId` so offline edit-twice on the same row doesn't create conflicts.
+  - **Sync:** `SyncProvider` listens via `@react-native-community/netinfo`. On reconnect, drains the queue → executes against Supabase → removes on success → max 5 retries → prunes failed writes.
+  - **Conflict resolution:** Last-write-wins (acceptable for Phase 1 single-user single-device; upgrade to PowerSync in Phase 2 for multi-device).
+- **Impact:** Users can record transactions offline; queued writes sync when back online; reads work from cache.
+- **Status:** ✅ IMPLEMENTED — installed in Step 4 alongside data hooks. Affects: `query-provider.tsx`, `pending-writes-store.ts`, `sync-provider.tsx`, all mutation hooks in `use-categories.ts` and `use-transactions.ts`.

@@ -357,6 +357,8 @@ Tab: Profile → Transaction Import Settings
 | Styling | NativeWind | Tailwind syntax in React Native — familiar for React devs |
 | Async Storage | @react-native-async-storage/async-storage | Persist non-sensitive Zustand state (user prefs, filters) across sessions |
 | List Rendering | @shopify/flash-list | Drop-in FlatList replacement, ~5× faster for long transaction lists |
+| Offline Reads | @tanstack/query-async-storage-persister | Persists query cache to AsyncStorage so lists render offline |
+| Offline Writes | @react-native-community/netinfo + custom Zustand queue | Detects reconnect, drains pending writes queue to Supabase |
 | Safe Area | react-native-safe-area-context | Handle notch and gesture bar on Android |
 | Gesture Handler | react-native-gesture-handler | Peer dep for Expo Router and bottom sheet |
 | Animations | react-native-reanimated | Peer dep for bottom sheet, smooth animations |
@@ -1122,6 +1124,9 @@ Current Alibaba Cloud VPS is 1GB RAM / 1 CPU. Only FastAPI + lightweight Postgre
 - Color palette is locked: Plum #3D1152 + Tangerine #FF6B2B. Do not deviate without updating this document.
 - AI LLM split: Cloudflare Workers AI (Llama 3.1 8B) for email parsing only; Qwen/GLM for AI chat agent.
 - Never store raw email content. Parsed JSON only.
+- Auth session tokens stored in `expo-secure-store` (encrypted), never AsyncStorage.
+- Multi-currency (Phase 1): per-transaction currency selector is available, but dashboard totals only sum transactions in the user's default currency. Foreign-currency transactions are counted but excluded from totals. FX rate table deferred to Phase 2+.
+- Offline-first (Phase 1): TanStack Query cache persisted to AsyncStorage for reads (24h max age). Failed writes queued in AsyncStorage and drained via NetInfo listener on reconnect. Max 5 retries per write, last-write-wins conflict resolution. Multi-device sync (PowerSync or similar) deferred to Phase 2.
 
 ---
 

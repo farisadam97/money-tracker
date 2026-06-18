@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/src/lib/supabase";
+import { usePendingWritesStore } from "@/src/stores/pending-writes-store";
 import type {
   TransactionInsert,
   TransactionRow,
@@ -85,13 +86,23 @@ export function useCreateTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: TransactionInsert) => {
-      const { data, error } = await supabase
-        .from("transactions")
-        .insert(input as never)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as TransactionRow;
+      try {
+        const { data, error } = await supabase
+          .from("transactions")
+          .insert(input as never)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as TransactionRow;
+      } catch (err) {
+        // Offline or network error: enqueue for later sync
+        usePendingWritesStore.getState().enqueue({
+          table: "transactions",
+          operation: "insert",
+          payload: input,
+        });
+        throw err;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
   });
@@ -104,14 +115,24 @@ export function useUpdateTransaction() {
       id,
       ...patch
     }: TransactionUpdate & { id: string }) => {
-      const { data, error } = await supabase
-        .from("transactions")
-        .update(patch as never)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as TransactionRow;
+      try {
+        const { data, error } = await supabase
+          .from("transactions")
+          .update(patch as never)
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data as TransactionRow;
+      } catch (err) {
+        usePendingWritesStore.getState().enqueue({
+          table: "transactions",
+          operation: "update",
+          payload: { id, ...patch },
+          tempId: id,
+        });
+        throw err;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
   });
@@ -121,12 +142,22 @@ export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-      return id;
+      try {
+        const { error } = await supabase
+          .from("transactions")
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+        return id;
+      } catch (err) {
+        usePendingWritesStore.getState().enqueue({
+          table: "transactions",
+          operation: "delete",
+          payload: id,
+          tempId: id,
+        });
+        throw err;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
   });

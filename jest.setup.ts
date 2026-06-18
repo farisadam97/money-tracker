@@ -16,3 +16,11 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
   multiSet: jest.fn(async () => undefined),
   multiRemove: jest.fn(async () => undefined),
 }));
+
+// Mock NetInfo — required by SyncProvider
+jest.mock("@react-native-community/netinfo", () => ({
+  default: {
+    addEventListener: jest.fn(() => jest.fn()),
+    fetch: jest.fn(async () => ({ isConnected: true, isInternetReachable: true })),
+  },
+}));
