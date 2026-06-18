@@ -319,7 +319,7 @@ Tab: Profile → Transaction Import Settings
 - Income / Expense toggle below amount
 - Category picker: grid of icons with names, scrollable
 - Date picker: default today, tappable
-- Currency selector: dropdown, default from profile preference
+- Currency selector: dropdown, default from profile preference. **Multi-currency note (Phase 1):** transactions in foreign currencies are stored correctly but excluded from dashboard monthly totals. Dashboard shows a small footnote: "N transactions in other currencies not included." FX rate aggregation deferred to Phase 2+.
 - Note: optional text input
 - Save button at bottom — disabled until amount and category selected
 - Same screen used for Edit (prefilled) with Delete option in header
@@ -348,13 +348,15 @@ Tab: Profile → Transaction Import Settings
 | Server State | TanStack Query | Fetch, cache, sync Supabase data. Handles loading/error states. |
 | UI State | Zustand | Local state: active filters, selected period, user preferences |
 | Database & Auth | @supabase/supabase-js | Official Supabase SDK for DB queries and auth |
+| Secure Storage | expo-secure-store | Encrypted session token storage (Android Keystore). Required for finance app — never use AsyncStorage for auth. |
 | Google OAuth | expo-web-browser + expo-auth-session | Required for OAuth redirect flow on Android |
 | Icons | lucide-react-native | Consistent with web dashboard, same icon names |
 | Bottom Sheet | @gorhom/bottom-sheet | Best React Native bottom sheet, actively maintained |
 | Date Picker | react-native-date-picker | Native feel date picker, Expo compatible |
 | Forms | react-hook-form + zod | Form validation, same ecosystem as web |
 | Styling | NativeWind | Tailwind syntax in React Native — familiar for React devs |
-| Async Storage | @react-native-async-storage/async-storage | Persist Zustand state across sessions |
+| Async Storage | @react-native-async-storage/async-storage | Persist non-sensitive Zustand state (user prefs, filters) across sessions |
+| List Rendering | @shopify/flash-list | Drop-in FlatList replacement, ~5× faster for long transaction lists |
 | Safe Area | react-native-safe-area-context | Handle notch and gesture bar on Android |
 | Gesture Handler | react-native-gesture-handler | Peer dep for Expo Router and bottom sheet |
 | Animations | react-native-reanimated | Peer dep for bottom sheet, smooth animations |

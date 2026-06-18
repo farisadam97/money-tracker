@@ -9,6 +9,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ## Step 1: Install Dependencies
 
 ### 1a. Core Dependencies
+
 - [x] Install Supabase: `@supabase/supabase-js`
 - [x] Install Expo auth deps: `expo-web-browser`, `expo-auth-session`, `expo-crypto`
 - [x] Install NativeWind: `nativewind`
@@ -20,9 +21,11 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [x] Install async storage: `@react-native-async-storage/async-storage`
 
 ### 1b. Dev Dependencies
+
 - [x] Install Tailwind CSS dev deps: `tailwindcss@3`
 
 ### 1c. Verify Installation
+
 - [x] Build succeeds with no errors
 - [x] All packages listed in `package.json`
 
@@ -31,6 +34,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ## Step 2: NativeWind + Design System
 
 ### 2a. Configure NativeWind v4
+
 - [x] Create `nativewind-env.d.ts` type declaration
 - [x] Create/update `tailwind.config.js` with NativeWind v4 preset + custom PRD colors
 - [x] Create/update `metro.config.js` — add NativeWind v4 metro plugin (not babel)
@@ -38,6 +42,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [x] Verify NativeWind v4 renders correctly on Android (no babel plugin needed)
 
 ### 2b. Create Design Tokens
+
 - [x] Create `src/constants/colors.ts` — all PRD colors:
   - Plum primary `#3D1152`
   - Tangerine accent `#FF6B2B`
@@ -65,6 +70,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [x] Verify NativeWind renders correctly on Android
 
 ### 2c. Clean Up Boilerplate
+
 - [x] Delete unused components: `hello-wave.tsx`, `parallax-scroll-view.tsx`, `external-link.tsx`, `themed-text.tsx`, `themed-view.tsx`, `haptic-tab.tsx`
 - [x] Delete unused hooks: `use-theme-color.ts`, `use-color-scheme.ts`, `use-color-scheme.web.ts`
 - [x] Delete `constants/theme.ts` (replaced by NativeWind + colors.ts)
@@ -77,16 +83,19 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ## Step 3: Supabase Client + Auth
 
 ### 3a. Supabase Client
+
 - [x] Create `src/lib/supabase.ts` — initialize client with env vars
 - [ ] Verify client connects (test query in app or console)
 
 ### 3b. Auth Context
+
 - [x] Create `src/contexts/auth-context.tsx` — session state + user object
 - [x] Create `src/hooks/use-auth.ts` — convenience hook wrapping context
 - [x] Handle session persistence (auto-login on app reopen)
 - [ ] ~~Track guest mode state~~ — Removed in PRD v1.3 (guest mode deferred to future)
 
 ### 3c. Google OAuth Flow
+
 - [x] Configure `expo-auth-session` with Google provider
 - [ ] Configure redirect URIs for development (`exp://127.0.0.1:19000/--/`)
 - [x] Implement sign-in flow using `expo-web-browser` + `expo-auth-session` + `supabase.auth.signInWithIdToken`
@@ -94,6 +103,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [ ] Test: Google Sign In → session created → sign out → session cleared
 
 ### 3d. ~~Guest Mode~~ — Removed in PRD v1.3
+
 - [x] ~~Implement "Continue as Guest"~~ — Deferred to future phase
 - [x] Guest mode code exists in `src/stores/guest-data-store.ts` and `src/lib/migrate-guest.ts` but not required for Phase 1
 
@@ -102,17 +112,20 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ## Step 4: State Management + Query Setup
 
 ### 4a. TanStack Query Provider
+
 - [ ] Create `src/providers/query-provider.tsx` — QueryClient wrapper
 - [ ] Wrap app root with provider in `app/_layout.tsx`
 
 ### 4b. Zustand Stores
-- [ ] Create `src/stores/user-preferences-store.ts` — default currency, etc.
+
+- [ ] Create `src/stores/user-preferences-store.ts` — default currency, onboarding flag
 - [ ] Create `src/stores/filter-store.ts` — transaction filter state (type, categories, date range)
-- [x] Create `src/stores/guest-data-store.ts` — local-only storage for guest transactions and categories
+- [x] ~~Create `src/stores/guest-data-store.ts`~~ — Removed (TD-1: guest mode code deleted)
 - [ ] Persist user preferences to AsyncStorage
-- [ ] Persist guest data to AsyncStorage
+- [x] ~~Persist guest data to AsyncStorage~~ — Removed (TD-1)
 
 ### 4c. Data Hooks
+
 - [ ] Create `src/hooks/use-categories.ts` — fetch, create, update, delete categories
 - [ ] Create `src/hooks/use-transactions.ts` — fetch, create, update, delete transactions
 - [ ] Create `src/hooks/use-summary.ts` — monthly income/expense/balance aggregation
@@ -123,6 +136,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ## Step 5: Auth Screens
 
 ### 5a. Splash Screen
+
 - [ ] Create `app/splash.tsx` — full screen, centered, bg `#FAF7F5`
 - [ ] App logo centered, large (80–100px)
 - [ ] App name "MoneyTracker" 24px weight 500 `#3D1152`
@@ -132,6 +146,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [ ] If no session → redirect to login
 
 ### 5b. Login Screen
+
 - [ ] Create `app/login.tsx` — full screen, bg `#FAF7F5`
 - [ ] Top 45% branding: app logo, "MoneyTracker" 28px weight 500 `#3D1152`, tagline 14px `#8C7A9B`
 - [ ] Center auth area: "Welcome back" 20px weight 500 `#1C0F2E`, subtitle "Sign in to continue tracking your finances" 14px `#8C7A9B`
@@ -144,10 +159,12 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 - [ ] Error state if OAuth fails
 
 ### 5c. Root Layout Update
+
 - [ ] Update `app/_layout.tsx` — auth gate: redirect to login if no session
 - [ ] Remove dark mode support (light mode only per PRD)
 
 ### 5d. Shared UI Components
+
 - [ ] Create `src/components/shared/confirm-dialog.tsx` — reusable modal overlay
   - Semi-transparent dark backdrop
   - White card centered, border-radius 14px, padding 20px
@@ -171,6 +188,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 Shown once immediately after first successful login, before reaching the main app. All three screens use bg `#FAF7F5`.
 
 ### 5.5a. Screen 1 — Welcome
+
 - [ ] Create `app/onboarding/welcome.tsx`
 - [ ] App logo centered, large
 - [ ] "Welcome to MoneyTracker" 24px weight 500 `#3D1152`
@@ -179,6 +197,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Tapping Get Started → navigate to Screen 2
 
 ### 5.5b. Screen 2 — Auto-Import Setup (Optional)
+
 - [ ] Create `app/onboarding/auto-import.tsx`
 - [ ] Heading: "Want transactions recorded automatically?" 20px weight 500 `#1C0F2E`
 - [ ] Subtitle: "Forward your bank or e-wallet emails and we'll do the rest." 14px `#8C7A9B`
@@ -190,6 +209,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Both buttons always visible — neither blocks the user
 
 ### 5.5c. Screen 3 — Manual Entry Intro
+
 - [ ] Create `app/onboarding/manual-entry.tsx`
 - [ ] Heading: "You can always add transactions manually" 20px weight 500 `#1C0F2E`
 - [ ] Subtitle: "Tap the + button anytime to record cash or any transaction" 14px `#8C7A9B`
@@ -197,6 +217,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Tapping Go to Dashboard → navigate to main app (bottom tabs), mark onboarding complete
 
 ### 5.5d. Onboarding Logic
+
 - [ ] Track onboarding completion per user (store flag in AsyncStorage or Supabase user metadata)
 - [ ] After login: check onboarding flag → if not completed, show onboarding flow; if completed, go to main app
 - [ ] Onboarding flow uses horizontal swipe or next/back buttons (consistent navigation)
@@ -208,6 +229,7 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 6: Tab Navigation
 
 ### 6a. Create 5-Tab Layout
+
 - [ ] Create `app/(tabs)/index.tsx` — Home tab (placeholder)
 - [ ] Create `app/(tabs)/transactions.tsx` — Transactions tab (placeholder)
 - [ ] Create `app/(tabs)/add.tsx` — Add tab (placeholder, will be FAB style)
@@ -215,6 +237,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Create `app/(tabs)/profile.tsx` — Profile tab (placeholder)
 
 ### 6b. Tab Configuration
+
 - [ ] Update `app/(tabs)/_layout.tsx` — 5 tabs with Lucide icons
 - [ ] Tab icons (per StitchBrief): Home (House), Transactions (LayoutList), Add (CirclePlus), Categories (Tag), Profile (User)
 - [ ] Active tab: icon + label color `#3D1152`
@@ -228,6 +251,7 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 7: Categories Tab
 
 ### 7a. Category Display
+
 - [ ] Create `src/components/categories/category-card.tsx` — icon + name + color circle
 - [ ] Create `src/components/categories/master-categories-section.tsx`
   - Section label "Default Categories" 12px weight 500 `#8C7A9B`, count badge in `#EDE0F5` bg
@@ -243,6 +267,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Wire up `use-categories` hook to fetch data
 
 ### 7b. Category Bottom Sheet Form
+
 - [ ] Create `src/components/categories/category-form-sheet.tsx` — add/edit form
 - [ ] Handle + title: "New Category" or "Edit Category" 16px weight 500 `#1C0F2E`
 - [ ] Name input: label "Name" 12px `#8C7A9B`, full width text input, border 0.5px `#EAE3F0`, border-radius 8px, padding 12px, autofocus
@@ -256,6 +281,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Two buttons side by side: "Cancel" outlined `#3D1152` and "Save" filled bg `#3D1152` white text
 
 ### 7c. Category CRUD
+
 - [ ] Create new custom category → inserts with `user_id = auth.uid()`
 - [ ] Edit custom category → updates name/icon/color
 - [ ] Delete custom category → confirm dialog → hard delete (or soft delete via `is_active`)
@@ -266,6 +292,7 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 8: Add Transaction Screen
 
 ### 8a. Full Screen Layout
+
 - [ ] Create `app/add-transaction.tsx` — full screen modal
 - [ ] Header: back arrow (ChevronLeft), title "Add Transaction" or "Edit Transaction", Trash2 icon (edit only)
 - [ ] Large amount input at top: currency symbol 24px `#8C7A9B`, amount 48px weight 500 `#1C0F2E`
@@ -282,6 +309,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Save disabled state: bg `#EAE3F0`, text `#8C7A9B` (when amount is 0 or no category)
 
 ### 8b. Category Picker Screen (StitchBrief Screen 5B)
+
 - [ ] Create `app/category-picker.tsx` — full screen pushed from Add Transaction
 - [ ] Header: back arrow + "Select Category" title
 - [ ] "Default Categories" section header 12px weight 500 `#8C7A9B`
@@ -291,17 +319,20 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Last cell: dashed border, Plus icon, "Add New" label `#8C7A9B` → opens Category Form Bottom Sheet
 
 ### 8b. Form Validation
+
 - [ ] Validate amount > 0
 - [ ] Validate category selected
 - [ ] Validate date is valid
 - [ ] Show validation errors inline
 
 ### 8c. Edit Mode
+
 - [ ] Same screen used for editing (prefilled with transaction data)
 - [ ] Delete button in header (only in edit mode)
 - [ ] Delete confirmation dialog
 
 ### 8d. Save Transaction
+
 - [ ] Insert new transaction via `use-transactions` hook
 - [ ] Set `source = 'manual'` by default on all new transactions (PRD v1.5 Section 3 — transactions.source)
 - [ ] Optimistic update on TanStack Query cache
@@ -313,15 +344,18 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 9: Home Dashboard
 
 ### 9a. Dashboard Header
+
 - [ ] Period: "This Month" — fixed for Phase 1, no selector
 
 ### 9b. Summary Cards
+
 - [ ] Create `src/components/home/summary-cards.tsx` — 3 cards at top
 - [ ] Total Income card — green `#1A7A4A` accent
 - [ ] Total Expense card — red `#C13333` accent
 - [ ] Balance card — plum `#3D1152`
 
 ### 9c. Spending by Category
+
 - [ ] Create `src/components/home/spending-by-category.tsx`
 - [ ] Section header: "Spending by Category" left, "See all" 12px `#FF6B2B` right
 - [ ] Up to 5 category rows: colored circle avatar 32px, category name 13px `#1C0F2E`, amount 13px weight 500 right-aligned
@@ -329,6 +363,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Empty state: "No expenses this month" centered `#8C7A9B`
 
 ### 9d. Recent Transactions
+
 - [ ] Create `src/components/home/recent-transactions.tsx`
 - [ ] Section header: "Recent Transactions" left, "See all" 12px `#FF6B2B` right
 - [ ] Last 5 transactions, each row: colored circle avatar 36px, name/merchant 13px weight 500, amount with `+`/`−` prefix
@@ -337,6 +372,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Tap row → open Transaction Bottom Sheet
 
 ### 9e. Transaction Bottom Sheet
+
 - [ ] Create `src/components/transactions/transaction-detail-sheet.tsx`
 - [ ] Handle + category icon circle 52px centered, colored bg, Lucide icon 24px
 - [ ] Category name 13px `#8C7A9B` centered below icon
@@ -352,6 +388,7 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 10: Transaction List
 
 ### 10a. List Header + Display
+
 - [ ] Header: title "Transactions" 20px weight 500 `#1C0F2E`, right: SlidersHorizontal icon 22px `#8C7A9B`
 - [ ] Filter icon shows filled tangerine `#FF6B2B` dot badge when any filter is active
 - [ ] Create `src/components/transactions/transaction-row.tsx`
@@ -362,12 +399,14 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Row separator: 0.5px border `#EAE3F0`
 
 ### 10b. Search + Filter Chips
+
 - [ ] Search bar: full width input, bg white, border 0.5px `#EAE3F0`, border-radius 10px, Search icon left `#8C7A9B`, clear X button when text entered
 - [ ] Active filter chips: horizontal scrollable row below search
 - [ ] Each chip: bg `#EDE0F5`, text `#3D1152`, 12px, border-radius 20px, small X to remove
 - [ ] Tap filter icon → open Filter Bottom Sheet
 
 ### 10c. Filter Bottom Sheet
+
 - [ ] Create `src/components/transactions/filter-sheet.tsx`
 - [ ] Header row: "Filter Transactions" 16px weight 500 `#1C0F2E` left, "Reset" 14px `#FF6B2B` right
 - [ ] Type filter: 3 toggle chips (All / Income / Expense), active bg `#3D1152` white text, inactive bg `#FAF7F5` border `#EAE3F0`
@@ -376,6 +415,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Apply button pinned bottom: bg `#3D1152`, label "Apply Filters" or "Apply (N filters)"
 
 ### 10d. Date Grouping + Interactions
+
 - [ ] Group transactions by date with sticky headers: "Today", "Yesterday", then "Mon, 12 Jan 2026"
 - [ ] Date header: 12px weight 500 `#8C7A9B`, bg `#FAF7F5`
 - [ ] Infinite scroll with loading indicator
@@ -389,6 +429,7 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 11: Profile Tab
 
 ### 11a. Profile Screen
+
 - [ ] Header: title "Profile" 20px weight 500 `#1C0F2E`
 - [ ] User card (white card, border-radius 12px, padding 16px):
   - **Signed-in users:** Circle avatar 64px from Google photo, fallback initials bg `#EDE0F5` text `#3D1152`
@@ -404,6 +445,7 @@ Shown once immediately after first successful login, before reaching the main ap
 ## Step 12: Final Polish
 
 ### 12a. Navigation Refinements
+
 - [ ] Transaction Bottom Sheet: edit → Add Transaction (prefilled) → save → refresh list
 - [ ] Home recent transaction tap → Transaction Bottom Sheet
 - [ ] Dashboard "See all" links → navigate to Transactions tab / Categories tab
@@ -411,6 +453,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] Add tab (center) navigates to Add Transaction full screen
 
 ### 12b. Error Handling
+
 - [ ] Network error states (Supabase unreachable)
 - [ ] Empty states for all lists using shared `empty-state.tsx` component
 - [ ] Loading skeletons using shared `skeleton-loader.tsx` (animated bars `#EAE3F0`, not spinners)
@@ -418,6 +461,7 @@ Shown once immediately after first successful login, before reaching the main ap
 - [ ] All confirm dialogs use shared `confirm-dialog.tsx`
 
 ### 12c. Visual Polish
+
 - [ ] All colors match PRD Section 12 + StitchBrief design system
 - [ ] All cards: white bg, 0.5px border `#EAE3F0`, border-radius 12px, padding 16px
 - [ ] All bottom sheets: white surface, 18px top border-radius, drag handle bar
@@ -435,6 +479,7 @@ Shown once immediately after first successful login, before reaching the main ap
 These are not Phase 1 features, but they are the gate between "Phase 1 done" and "Phase 1 shipped." Complete before submitting to Google Play.
 
 ### 13a. Android Packaging
+
 - [ ] Create `eas.json` with `preview` (APK) and `production` (AAB) profiles
 - [ ] Set `android.package` in `app.json` (e.g. `com.yourdomain.moneytracker`)
 - [ ] Set `android.versionCode` in `app.json`
@@ -442,6 +487,7 @@ These are not Phase 1 features, but they are the gate between "Phase 1 done" and
 - [ ] Store secrets in EAS Environment Variables (`eas env:create`), not committed `.env`
 
 ### 13b. Store Policy Compliance
+
 - [ ] Account deletion: Supabase Edge Function using service role key (cascade delete across all tables per PRD §16.4)
 - [ ] Account deletion: in-app button in Profile tab with confirm dialog
 - [ ] Account deletion: web-hosted fallback page (Google requires both in-app + web option since April 2023)
@@ -450,16 +496,19 @@ These are not Phase 1 features, but they are the gate between "Phase 1 done" and
 - [ ] Declare app does NOT handle payments or store payment instruments (avoid financial-app extra scrutiny)
 
 ### 13c. OAuth Hardening
+
 - [ ] Add explicit `redirectUri` per platform in Google auth request (current code relies on Expo Go defaults, breaks in standalone)
 - [ ] Configure per-platform Google OAuth client IDs in Google Cloud Console (Android, iOS, Web)
 - [ ] Test full Google Sign In flow on a production APK build, not just Expo Go
 
 ### 13d. Observability
+
 - [ ] Add `@sentry/react-native` dependency (listed in PRD §2 but not in package.json)
 - [ ] Configure Sentry DSN via EAS env var
 - [ ] Verify crash reports arrive from a staging build
 
 ### 13e. Store Listing Assets
+
 - [ ] App icon 512×512 PNG
 - [ ] Feature graphic 1024×500 PNG
 - [ ] 4–8 screenshots (use `react-native-view-shot` or manual emulator captures)
@@ -500,9 +549,9 @@ Before marking Phase 1 complete, verify each:
 
 ---
 
-*Created: April 2026*
-*Updated: May 2026 — aligned with PRD v1.5 (guest mode removed, onboarding flow added, source field added, privacy/RLS sections noted). Guest mode code retained but not required for Phase 1.*
-*For: MoneyTracker App Phase 1 Implementation*
+_Created: April 2026_
+_Updated: May 2026 — aligned with PRD v1.5 (guest mode removed, onboarding flow added, source field added, privacy/RLS sections noted). Guest mode code retained but not required for Phase 1._
+_For: MoneyTracker App Phase 1 Implementation_
 
 ---
 
@@ -511,24 +560,28 @@ Before marking Phase 1 complete, verify each:
 Shortcuts or incorrect code that already exists in the codebase. These violate project conventions and should be fixed — not just documented.
 
 ### TD-1: Dead guest-mode code in auth context
+
 - **File:** `src/contexts/auth-context.tsx`
 - **Issue:** `signInAsGuest`, `isGuest`, `GUEST_KEY`, and `migrateGuestDataToSupabase()` call still present. Guest mode was removed in PRD v1.3 (see Step 3d). Code is dead surface area that will confuse Play Store review.
 - **Convention violated:** `rules/common/coding-style.md` — no dead code / backwards-compat hacks
 - **Fix:** Remove guest state, methods, storage key, and the migrate-guest import/call. Also delete `src/stores/guest-data-store.ts` and `src/lib/migrate-guest.ts` if no longer referenced.
 
 ### TD-2: Android adaptive icon uses wrong background color
+
 - **File:** `app.json` (line ~17)
 - **Issue:** `adaptiveIcon.backgroundColor` is `#E6F4FE` (generic Expo light blue). Violates locked PRD palette.
 - **Convention violated:** PRD §13 / §15 — palette is locked (Parchment `#FAF7F5` or Plum `#3D1152`)
 - **Fix:** Change `#E6F4FE` → `#FAF7F5`
 
 ### TD-3: Google OAuth missing explicit redirect URIs
+
 - **File:** `src/contexts/auth-context.tsx` (lines ~33-38)
 - **Issue:** `Google.useAuthRequest` passes only `clientId` with no `redirectUri`. Works in Expo Go, breaks in standalone production builds. Also uses a single client ID — production needs per-platform client IDs (Android, iOS, Web).
 - **Convention violated:** Production readiness; Phase 1 Verification requires Google Sign In to work end-to-end
 - **Fix:** Add explicit `redirectUri` per platform using `AuthSession.makeRedirectUri()`. Configure separate Google OAuth client IDs per platform in Google Cloud Console.
 
 ### TD-4: Insecure auth session storage (AsyncStorage)
+
 - **File:** `src/lib/supabase.ts` (line 14)
 - **Issue:** Supabase client uses default storage (AsyncStorage) for auth session tokens. AsyncStorage is unencrypted and readable by anyone with device access. Unacceptable for a finance app handling transaction data.
 - **Convention violated:** `rules/common/security.md` — security-first; finance app baseline
@@ -539,30 +592,37 @@ Shortcuts or incorrect code that already exists in the codebase. These violate p
     setItem: SecureStore.setItemAsync,
     removeItem: SecureStore.deleteItemAsync,
   };
-  createClient(url, key, { auth: { storage, autoRefreshToken: true, persistSession: true } });
+  createClient(url, key, {
+    auth: { storage, autoRefreshToken: true, persistSession: true },
+  });
   ```
 
 ### TD-5: `source` CHECK constraint missing 'email' value
+
 - **File:** `sql/01_create_phase1_tables.sql` (line 62)
 - **Issue:** Column defined as `CHECK (source IN ('manual', 'split_bill'))` but PRD §3 requires enum `manual | split_bill | email`. When Phase 2.5 email auto-import ships, every INSERT with `source = 'email'` will fail at the DB level.
 - **Convention violated:** PRD §3 schema definition; forward compatibility
 - **Fix:** Update constraint to `CHECK (source IN ('manual', 'split_bill', 'email'))`. Run as a migration before any data accumulates. Also update `src/types/database.ts` to match.
 
 ### TD-6: Currency default 'USD' instead of 'IDR'
+
 - **File:** `sql/01_create_phase1_tables.sql` (line 53)
 - **Issue:** `DEFAULT 'USD'` — the app is for Indonesian users (UU PDP compliance, GoPay/BCA/Mandiri, IDR). StitchBrief even shows "$1,250.00" examples that should be "Rp1.250.000" formatting. Wrong default currency breaks every new transaction.
 - **Convention violated:** PRD target market (Indonesia); UX correctness
 - **Fix:** Change `DEFAULT 'USD'` → `DEFAULT 'IDR'`. Update StitchBrief currency format examples to use Rp prefix and Indonesian thousand separators.
 
 ### TD-7: Zero test infrastructure despite 80% coverage requirement
+
 - **Files:** `package.json`, entire `src/` and `app/` directories
 - **Issue:** AGENTS.md and `rules/common/testing.md` require 80%+ test coverage (unit + integration + E2E). There is **no testing framework installed** — no Jest, Vitest, React Native Testing Library, or Playwright in dependencies. No test files exist anywhere. This is the single biggest gap blocking Phase 1 completion.
 - **Convention violated:** `rules/common/testing.md` — 80% minimum; AGENTS.md Core Principle #2 (Test-Driven)
 - **Fix:** Set up before continuing Step 4:
+
   ```bash
   npm install -D jest @testing-library/react-native @testing-library/jest-native @types/jest
   npm install -D jest-expo  # Expo-specific Jest preset
   ```
+
   - Add `jest.config.js` with `preset: 'jest-expo'`
   - Add `"test": "jest"` script to package.json
   - Create `src/__tests__/` directory
@@ -576,6 +636,7 @@ Shortcuts or incorrect code that already exists in the codebase. These violate p
 These are not bugs or tech debt — they're design decisions worth reconsidering before committing to the current PRD scope. Each needs a decision (accept / reject / defer) before the affected phase begins.
 
 ### AR-1: Re-scope FastAPI backend (affects Phase 2)
+
 - **Current plan:** Full FastAPI backend duplicating `/transactions`, `/categories`, `/summary` CRUD ([PRD §6.3](./MoneyTracker_PRD_v1.5.md)).
 - **Recommendation:** Supabase already provides PostgREST auto-API + RLS. The Vite web dashboard can call Supabase directly with the user's JWT. FastAPI is only needed for operations requiring the service role key or third-party secrets:
   - ✅ `/email-import` (needs service role + Cloudflare Worker auth)
@@ -588,12 +649,14 @@ These are not bugs or tech debt — they're design decisions worth reconsidering
 - **Decision needed:** Before Phase 2 planning.
 
 ### AR-2: Add `@shopify/flash-list` for transaction lists (Phase 1)
+
 - **Issue:** StitchBrief Screen 4 specifies infinite scroll transaction list. Stock `FlatList` janks above ~200 items. Retrofitting later means rewriting every list component.
 - **Recommendation:** Install now, use in all list components from day one.
 - **Impact:** Drop-in replacement for FlatList, ~5× faster, same API.
 - **Decision needed:** Before Step 9 (Home Dashboard) and Step 10 (Transaction List).
 
 ### AR-3: Add recurring transactions feature (Phase 1 or 2)
+
 - **Gap:** Most users have ~10 recurring expenses (rent, phone, subscriptions). Without recurring transactions, they manually re-enter every month and churn. This is higher user value than OCR or AI chat.
 - **Recommendation:** Add before Phase 3 (OCR) / Phase 4 (AI). Schema is minimal:
   - New table: `recurring_transactions` (id, user_id, amount, category_id, type, frequency, next_date, is_active)
@@ -602,20 +665,24 @@ These are not bugs or tech debt — they're design decisions worth reconsidering
 - **Decision needed:** Whether to add to Phase 1 (scope creep) or make it Phase 2 priority.
 
 ### AR-4: Move email auto-import setup out of onboarding (Phase 2.5)
+
 - **Issue:** PRD §5.2 Screen 2 puts email auto-import setup in onboarding. Two problems:
   1. Users haven't seen app value yet — won't configure Gmail filters for an app they just opened
   2. Setup is 5+ steps with Gmail verification — massive drop-off
-- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: *"Want transactions imported automatically? Set up later in Profile."*
+- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: _"Want transactions imported automatically? Set up later in Profile."_
 - **Impact:** Higher onboarding completion rate; lower churn.
 - **Decision needed:** Before Step 5.5 (Onboarding Flow) implementation.
 
 ### AR-5: Drop per-transaction currency selector (Phase 1)
+
 - **Issue:** StitchBrief Screen 5 puts a currency selector on every transaction. Most users have one currency (IDR). Per-transaction currency adds complexity (FX rates, multi-currency totals) you don't need.
 - **Recommendation:** Profile-level default currency only. Remove currency row from Add Transaction screen. Schema `currency` column stays (always = user's default) for future flexibility, but no UI.
 - **Impact:** Simpler UX, less scope, fewer edge cases.
 - **Decision needed:** Before Step 8 (Add Transaction Screen) implementation.
+- **Status:** ✅ DECIDED — KEEP selector per PRD; defer FX aggregation. Selector stays in UI (defaults to user preference), but dashboard Phase 1 totals only sum transactions in the user's default currency. Foreign-currency transactions are stored correctly but excluded from monthly summary with a small footnote ("N transactions in other currencies not included"). FX rate table deferred to Phase 2+.
 
 ### AR-6: Add CSV export in Phase 1 (UU PDP legal requirement)
+
 - **Issue:** PRD §16.3 lists "Right to data portability" as a UU PDP obligation, mapped to "Export to CSV via web dashboard (Phase 2)." But you can't ship to Play Store without fulfilling data portability — it's a legal right, not a feature.
 - **Recommendation:** Add basic CSV export in Phase 1 Profile tab before Play Store submission. ~30 lines of code using a simple CSV builder + `expo-sharing` or `expo-file-system`.
 - **Impact:** Legal compliance for Phase 5 launch; unblocks Play Store submission.
