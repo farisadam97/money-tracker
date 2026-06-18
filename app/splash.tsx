@@ -4,13 +4,22 @@ import { Redirect } from "expo-router";
 
 import { Colors } from "@/src/constants/colors";
 import { useAuth } from "@/src/hooks/use-auth";
+import { useUserPreferencesStore } from "@/src/stores/user-preferences-store";
 
 /**
  * Splash screen — shown while app checks for existing auth session.
- * Auto-redirects to login or main app based on session state.
+ *
+ * Routing priority:
+ * 1. Loading → show splash
+ * 2. No session → login
+ * 3. Session + onboarding not complete → onboarding/welcome
+ * 4. Session + onboarding complete → main app (tabs)
  */
 export default function SplashScreen() {
   const { session, isLoading } = useAuth();
+  const onboardingComplete = useUserPreferencesStore(
+    (s) => s.onboardingComplete
+  );
 
   if (isLoading) {
     return (
@@ -18,7 +27,6 @@ export default function SplashScreen() {
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: Colors.parchment }}
       >
-        {/* Placeholder logo — replace with actual app logo asset */}
         <View
           style={{
             width: 90,
@@ -32,9 +40,7 @@ export default function SplashScreen() {
         >
           <Wallet size={48} color={Colors.surface} strokeWidth={2} />
         </View>
-        <Text
-          style={{ color: Colors.plum, fontSize: 24, fontWeight: "500" }}
-        >
+        <Text style={{ color: Colors.plum, fontSize: 24, fontWeight: "500" }}>
           MoneyTracker
         </Text>
         <Text
@@ -51,10 +57,13 @@ export default function SplashScreen() {
     );
   }
 
-  // Redirect based on session
-  return session ? (
-    <Redirect href="/(tabs)" />
-  ) : (
-    <Redirect href={"/login" as never} />
-  );
+  if (!session) {
+    return <Redirect href={"/login" as never} />;
+  }
+
+  if (!onboardingComplete) {
+    return <Redirect href={"/onboarding/welcome" as never} />;
+  }
+
+  return <Redirect href="/(tabs)" />;
 }
