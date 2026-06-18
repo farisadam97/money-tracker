@@ -1,160 +1,189 @@
-# Everything Claude Code (ECC) — Agent Instructions
+# MoneyTracker — Agent Instructions
 
-This is a **production-ready AI coding plugin** providing 28 specialized agents, 125 skills, 60 commands, and automated hook workflows for software development.
+Agent, skill, and rule index for the **MoneyTracker** project (a personal finance mobile app). This file is the entry point — it lists what exists and how to use it.
 
-**Version:** 1.9.0
+**Project:** MoneyTracker — React Native + Expo (Android), Supabase (Postgres + Auth + RLS), NativeWind v4, Zustand + TanStack Query, TypeScript. Currently **Phase 1** in progress. See [MoneyTracker_PRD_v1.5.md](./MoneyTracker_PRD_v1.5.md) and [PHASE1_CHECKLIST.md](./PHASE1_CHECKLIST.md) for full product scope and current work.
+
+---
 
 ## Core Principles
 
-1. **Agent-First** — Delegate to specialized agents for domain tasks
-2. **Test-Driven** — Write tests before implementation, 80%+ coverage required
-3. **Security-First** — Never compromise on security; validate all inputs
-4. **Immutability** — Always create new objects, never mutate existing ones
-5. **Plan Before Execute** — Plan complex features before writing code
+1. **Plan Before Execute** — Use the `planner` agent for non-trivial features. Break work into phases; don't start Phase N+1 until Phase N is done.
+2. **Test-Driven** — Write tests first. **80%+ coverage required** (unit + integration + E2E).
+3. **Security-First** — Supabase RLS is mandatory. Never hardcode secrets. Validate all inputs (Zod schemas). Comply with UU PDP (Section 16 of PRD).
+4. **Immutability** — Always return new objects via spread; never mutate state in place.
+5. **Phase Discipline** — One phase at a time. PRD `Section 4` is the build order; PRD `Section 15` lists the locked design constraints (palette, no dark mode, etc.).
+
+---
 
 ## Available Agents
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| planner | Implementation planning | Complex features, refactoring |
-| architect | System design and scalability | Architectural decisions |
-| tdd-guide | Test-driven development | New features, bug fixes |
-| code-reviewer | Code quality and maintainability | After writing/modifying code |
-| security-reviewer | Vulnerability detection | Before commits, sensitive code |
-| build-error-resolver | Fix build/type errors | When build fails |
-| e2e-runner | End-to-end Playwright testing | Critical user flows |
-| refactor-cleaner | Dead code cleanup | Code maintenance |
-| doc-updater | Documentation and codemaps | Updating docs |
-| docs-lookup | Documentation and API reference research | Library/API documentation questions |
-| cpp-reviewer | C++ code review | C++ projects |
-| cpp-build-resolver | C++ build errors | C++ build failures |
-| go-reviewer | Go code review | Go projects |
-| go-build-resolver | Go build errors | Go build failures |
-| kotlin-reviewer | Kotlin code review | Kotlin/Android/KMP projects |
-| kotlin-build-resolver | Kotlin/Gradle build errors | Kotlin build failures |
-| database-reviewer | PostgreSQL/Supabase specialist | Schema design, query optimization |
-| python-reviewer | Python code review | Python projects |
-| java-reviewer | Java and Spring Boot code review | Java/Spring Boot projects |
-| java-build-resolver | Java/Maven/Gradle build errors | Java build failures |
-| chief-of-staff | Communication triage and drafts | Multi-channel email, Slack, LINE, Messenger |
-| loop-operator | Autonomous loop execution | Run loops safely, monitor stalls, intervene |
-| harness-optimizer | Harness config tuning | Reliability, cost, throughput |
-| rust-reviewer | Rust code review | Rust projects |
-| rust-build-resolver | Rust build errors | Rust build failures |
-| pytorch-build-resolver | PyTorch runtime/CUDA/training errors | PyTorch build/training failures |
-| typescript-reviewer | TypeScript/JavaScript code review | TypeScript/JavaScript projects |
+Located in [`agents/`](./agents/). Each agent has a YAML frontmatter describing its tools, model, and trigger conditions.
 
-## Agent Orchestration
+| Agent                                                    | Model   | Purpose                                    | When to Use                                    |
+| -------------------------------------------------------- | ------- | ------------------------------------------ | ---------------------------------------------- |
+| [planner](./agents/planner.md)                           | glm-5.2 | Implementation planning                    | Complex features, refactoring, multi-step work |
+| [architect](./agents/architect.md)                       | glm-5.2 | System design, scalability, ADRs           | Architectural decisions, system design         |
+| [tdd-guide](./agents/tdd-guide.md)                       | glm-5.2 | Test-driven development, 80%+ coverage     | New features, bug fixes, refactoring           |
+| [code-reviewer](./agents/code-reviewer.md)               | glm-5.2 | Quality + security review (CRITICAL → LOW) | Immediately after writing/modifying code       |
+| [security-reviewer](./agents/security-reviewer.md)       | glm-5.2 | OWASP Top 10, secrets, RLS                 | After auth/RLS/API code, before commit         |
+| [build-error-resolver](./agents/build-error-resolver.md) | glm-5.2 | TypeScript / build errors, minimal diffs   | When `tsc` or `expo` build fails               |
+| [doc-updater](./agents/doc-updater.md)                   | glm-5.2 | Codemaps, README/PRD maintenance           | After architecture or API changes              |
 
-Use agents proactively without user prompt:
-- Complex feature requests → **planner**
-- Code just written/modified → **code-reviewer**
-- Bug fix or new feature → **tdd-guide**
-- Architectural decision → **architect**
-- Security-sensitive code → **security-reviewer**
-- Multi-channel communication triage → **chief-of-staff**
-- Autonomous loops / loop monitoring → **loop-operator**
-- Harness config reliability and cost → **harness-optimizer**
+### Agent Orchestration
 
-Use parallel execution for independent operations — launch multiple agents simultaneously.
+- **Proactive use** — Don't wait for a user prompt to invoke `code-reviewer` or `tdd-guide`.
+- **Parallel execution** — Launch independent agents in a single message (e.g. security + code review on the same diff).
+- **Routing rules:**
+  - Complex feature request → `planner` first
+  - Code just written → `code-reviewer` next
+  - RLS/auth/API/sensitive code → `security-reviewer` in parallel with `code-reviewer`
+  - Build/type failure → `build-error-resolver`
+  - Architectural decision → `architect` (consider creating an ADR)
+  - Documentation drift → `doc-updater`
 
-## Security Guidelines
+---
 
-**Before ANY commit:**
-- No hardcoded secrets (API keys, passwords, tokens)
-- All user inputs validated
-- SQL injection prevention (parameterized queries)
-- XSS prevention (sanitized HTML)
-- CSRF protection enabled
-- Authentication/authorization verified
-- Rate limiting on all endpoints
-- Error messages don't leak sensitive data
+## Available Skills
 
-**Secret management:** NEVER hardcode secrets. Use environment variables or a secret manager. Validate required secrets at startup. Rotate any exposed secrets immediately.
+Located in [`skills/`](./skills/). Skills provide on-demand domain knowledge.
 
-**If security issue found:** STOP → use security-reviewer agent → fix CRITICAL issues → rotate exposed secrets → review codebase for similar issues.
+| Skill                                                                                               | Use For                                                                            |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [search-first](./skills/search-first/SKILL.md)                                                      | Before writing any new utility — search npm, MCP, GitHub, existing repo code first |
+| [coding-standards](./skills/coding-standards/SKILL.md)                                              | Universal TS/JS/React/Node conventions (naming, async, type safety)                |
+| [frontend-patterns](./skills/frontend-patterns/SKILL.md)                                            | React patterns, hooks, state management, performance, accessibility                |
+| [api-design](./skills/api-design/SKILL.md)                                                          | REST conventions: resource naming, status codes, pagination, versioning, errors    |
+| [backend-patterns](./skills/backend-patterns/SKILL.md)                                              | Repository/service layers, queries, caching, error handling, rate limiting         |
+| [database-migrations](./skills/database-migrations/SKILL.md)                                        | Safe Postgres schema changes, expand-contract pattern, zero-downtime               |
+| [deployment-patterns](./skills/deployment-patterns/SKILL.md)                                        | CI/CD, Docker, health checks, rollback, production readiness                       |
+| [tdd-workflow](./skills/tdd-workflow/SKILL.md)                                                      | TDD cycle, Playwright E2E patterns, mocking Supabase                               |
+| [security-review](./skills/security-review/SKILL.md)                                                | OWASP checklist, Supabase RLS, secrets, CSRF, rate limiting                        |
+| [security-review / cloud-infrastructure](./skills/security-review/cloud-infrastructure-security.md) | Cloud-specific security (Cloudflare, Supabase, VPS) — relevant for Phase 2/2.5     |
 
-## Coding Style
+---
 
-**Immutability (CRITICAL):** Always create new objects, never mutate. Return new copies with changes applied.
+## Available Rules
 
-**File organization:** Many small files over few large ones. 200-400 lines typical, 800 max. Organize by feature/domain, not by type. High cohesion, low coupling.
+Located in [`rules/`](./rules/). Rules are **always-applied guidelines** for this project.
 
-**Error handling:** Handle errors at every level. Provide user-friendly messages in UI code. Log detailed context server-side. Never silently swallow errors.
+### [Common rules](./rules/common/) — apply to all code
 
-**Input validation:** Validate all user input at system boundaries. Use schema-based validation. Fail fast with clear messages. Never trust external data.
+- [agents.md](./rules/common/agents.md) — agent orchestration and parallel execution
+- [coding-style.md](./rules/common/coding-style.md) — immutability, file size, error handling, validation
+- [development-workflow.md](./rules/common/development-workflow.md) — research → plan → TDD → review → commit
+- [git-workflow.md](./rules/common/git-workflow.md) — conventional commits, PR workflow
+- [hooks.md](./rules/common/hooks.md) — hook types, TodoWrite best practices
+- [patterns.md](./rules/common/patterns.md) — skeleton projects, repository pattern, API envelope
+- [performance.md](./rules/common/performance.md) — model selection, context window management
+- [security.md](./rules/common/security.md) — pre-commit security checklist, secret management
+- [testing.md](./rules/common/testing.md) — 80% coverage minimum, TDD workflow, test types
 
-**Code quality checklist:**
-- Functions small (<50 lines), files focused (<800 lines)
-- No deep nesting (>4 levels)
-- Proper error handling, no hardcoded values
-- Readable, well-named identifiers
+### [TypeScript rules](./rules/typescript/) — apply to `.ts`/`.tsx`/`.js`/`.jsx`
 
-## Testing Requirements
+- [coding-style.md](./rules/typescript/coding-style.md) — types vs interfaces, avoid `any`, React props, Zod, no `console.log`
+- [hooks.md](./rules/typescript/hooks.md) — Prettier + `tsc` PostToolUse hooks, console.log audit
+- [patterns.md](./rules/typescript/patterns.md) — `ApiResponse<T>` envelope, `useDebounce`, repository interface
+- [security.md](./rules/typescript/security.md) — env vars for secrets
+- [testing.md](./rules/typescript/testing.md) — Playwright for E2E
 
-**Minimum coverage: 80%**
-
-Test types (all required):
-1. **Unit tests** — Individual functions, utilities, components
-2. **Integration tests** — API endpoints, database operations
-3. **E2E tests** — Critical user flows
-
-**TDD workflow (mandatory):**
-1. Write test first (RED) — test should FAIL
-2. Write minimal implementation (GREEN) — test should PASS
-3. Refactor (IMPROVE) — verify coverage 80%+
-
-Troubleshoot failures: check test isolation → verify mocks → fix implementation (not tests, unless tests are wrong).
-
-## Development Workflow
-
-1. **Plan** — Use planner agent, identify dependencies and risks, break into phases
-2. **TDD** — Use tdd-guide agent, write tests first, implement, refactor
-3. **Review** — Use code-reviewer agent immediately, address CRITICAL/HIGH issues
-4. **Capture knowledge in the right place**
-   - Personal debugging notes, preferences, and temporary context → auto memory
-   - Team/project knowledge (architecture decisions, API changes, runbooks) → the project's existing docs structure
-   - If the current task already produces the relevant docs or code comments, do not duplicate the same information elsewhere
-   - If there is no obvious project doc location, ask before creating a new top-level file
-5. **Commit** — Conventional commits format, comprehensive PR summaries
-
-## Git Workflow
-
-**Commit format:** `<type>: <description>` — Types: feat, fix, refactor, docs, test, chore, perf, ci
-
-**PR workflow:** Analyze full commit history → draft comprehensive summary → include test plan → push with `-u` flag.
-
-## Architecture Patterns
-
-**API response format:** Consistent envelope with success indicator, data payload, error message, and pagination metadata.
-
-**Repository pattern:** Encapsulate data access behind standard interface (findAll, findById, create, update, delete). Business logic depends on abstract interface, not storage mechanism.
-
-**Skeleton projects:** Search for battle-tested templates, evaluate with parallel agents (security, extensibility, relevance), clone best match, iterate within proven structure.
-
-## Performance
-
-**Context management:** Avoid last 20% of context window for large refactoring and multi-file features. Lower-sensitivity tasks (single edits, docs, simple fixes) tolerate higher utilization.
-
-**Build troubleshooting:** Use build-error-resolver agent → analyze errors → fix incrementally → verify after each fix.
+---
 
 ## Project Structure
 
 ```
-agents/          — 28 specialized subagents
-skills/          — 117 workflow skills and domain knowledge
-commands/        — 60 slash commands
-hooks/           — Trigger-based automations
-rules/           — Always-follow guidelines (common + per-language)
-scripts/         — Cross-platform Node.js utilities
-mcp-configs/     — 14 MCP server configurations
-tests/           — Test suite
+agents/          — 7 specialized subagents (planner, architect, tdd-guide, code-reviewer, security-reviewer, build-error-resolver, doc-updater)
+skills/          — 9 workflow skills (search-first, coding-standards, frontend/backend/api-design, database-migrations, deployment-patterns, tdd-workflow, security-review + cloud)
+rules/           — 14 always-follow guidelines (9 common + 5 typescript)
+sql/             — Supabase migrations + README (Phase 1 RLS already applied)
+app/             — Expo Router screens (auth, onboarding, 5-tab main app, overlays)
+src/
+  constants/     — colors, categories, typography (Plum + Tangerine palette)
+  contexts/      — auth-context.tsx
+  hooks/         — use-auth.ts
+  lib/           — supabase.ts, migrate-guest.ts
+  stores/        — guest-data-store.ts (Zustand)
+  types/         — database.ts (hand-written, matches Supabase schema)
 ```
+
+---
+
+## Tech Stack (Quick Reference)
+
+| Layer               | Technology                                                          |
+| ------------------- | ------------------------------------------------------------------- |
+| Mobile framework    | React Native + Expo SDK 54                                          |
+| Routing             | Expo Router (file-based)                                            |
+| Styling             | NativeWind v4 (Tailwind)                                            |
+| Server state        | TanStack Query                                                      |
+| Local state         | Zustand (with AsyncStorage persistence)                             |
+| Forms               | react-hook-form + Zod                                               |
+| Backend             | Supabase (Postgres + Auth + Storage)                                |
+| Auth                | Supabase Auth + Google OAuth (expo-auth-session + expo-web-browser) |
+| Icons               | lucide-react-native                                                 |
+| Bottom sheet        | @gorhom/bottom-sheet                                                |
+| Date picker         | react-native-date-picker                                            |
+| Gestures/Animations | react-native-gesture-handler + react-native-reanimated              |
+| Safe area           | react-native-safe-area-context                                      |
+| TypeScript          | ~5.9, strict mode                                                   |
+
+---
+
+## Project-Specific Conventions
+
+These override or extend the default rules. Locked in by the PRD — do not change without updating the PRD.
+
+### Design System (PRD §13)
+
+- **Palette:** Plum `#3D1152` (primary), Tangerine `#FF6B2B` (accent), Parchment `#FAF7F5` (bg). See [src/constants/colors.ts](./src/constants/colors.ts).
+- **Light mode only** — no dark mode ever.
+- **Income:** green `#1A7A4A`, `+` prefix. **Expense:** red `#C13333`, `−` prefix. **Balance:** plum, turns red if negative.
+- **Cards:** white bg, 0.5px border `#EAE3F0`, 12px radius, 16px padding.
+- **Bottom sheets:** white, 18px top radius, drag handle bar.
+- **Loading:** skeleton bars in `#EAE3F0` — no spinners.
+
+### Database Conventions (PRD §3, §17)
+
+- **Master categories** have `user_id = NULL` — read-only, visible to all users.
+- **User categories/transactions** are RLS-scoped to `auth.uid()`.
+- `transactions.source` enum: `manual` | `split_bill` | `email`.
+- New transactions default to `source = 'manual'`.
+- RLS is non-negotiable — every table needs policies before launch.
+
+### Phase 1 Implementation Order
+
+Follow [PHASE1_CHECKLIST.md](./PHASE1_CHECKLIST.md) strictly. Currently:
+
+- ✅ Step 1 (deps) · Step 2 (NativeWind + tokens) · Step 3a-3c (Supabase client, auth context, Google OAuth)
+- ⬜ Step 4 (TanStack Query provider + Zustand stores) → Step 5 (Splash + Login) → Step 5.5 (Onboarding) → Steps 6–12 (tabs, screens, polish)
+
+### File & Code Style
+
+- **Many small files** (200–400 lines typical, 800 max). Organize by feature, not type.
+- **No `console.log`** in production code (TypeScript rule enforced by hooks).
+- **No `any`** — use `unknown` and narrow, or use Zod to infer types.
+- **No hardcoded secrets** — use `process.env` / Expo public env vars.
+- **No mutation** — return new objects via spread operator.
+
+---
+
+## Development Workflow
+
+Per [rules/common/development-workflow.md](./rules/common/development-workflow.md):
+
+1. **Research first** — `search-first` skill: check `rg` in repo, then npm, then GitHub, then write.
+2. **Plan** — `planner` agent for non-trivial work. Reference PRD section numbers in the plan.
+3. **TDD** — `tdd-guide` agent. Tests first. 80%+ coverage.
+4. **Review** — `code-reviewer` immediately after writing. `security-reviewer` in parallel for RLS/auth/email-import work.
+5. **Commit** — Conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `perf:`, `ci:`). See [rules/common/git-workflow.md](./rules/common/git-workflow.md).
+
+---
 
 ## Success Metrics
 
-- All tests pass with 80%+ coverage
-- No security vulnerabilities
-- Code is readable and maintainable
-- Performance is acceptable
-- User requirements are met
+- All tests pass with 80%+ coverage.
+- No CRITICAL/HIGH code-review or security-review issues open.
+- RLS verified by attempting cross-user data access (blocked).
+- Phase 1 verification checklist (bottom of [PHASE1_CHECKLIST.md](./PHASE1_CHECKLIST.md)) all green before declaring Phase 1 done.
+- Build succeeds: `npx expo start` on Android device/emulator, no console errors.
+- App respects all PRD Section 15 key principles (palette, no dark mode, single-phase-at-a-time, no over-engineering).

@@ -2,6 +2,8 @@
 
 Use this checklist to track progress through Phase 1 implementation. Complete each step in order — do not skip ahead.
 
+**Reference:** MoneyTracker PRD v1.5 (May 2026) — includes onboarding flow (Section 5.2), `source` field on transactions (Section 3), RLS rules (Section 17), and privacy compliance (Section 16).
+
 ---
 
 ## Step 1: Install Dependencies
@@ -164,6 +166,45 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 
 ---
 
+## Step 5.5: Onboarding Flow (First Login Only)
+
+Shown once immediately after first successful login, before reaching the main app. All three screens use bg `#FAF7F5`.
+
+### 5.5a. Screen 1 — Welcome
+- [ ] Create `app/onboarding/welcome.tsx`
+- [ ] App logo centered, large
+- [ ] "Welcome to MoneyTracker" 24px weight 500 `#3D1152`
+- [ ] Subtitle: "Track your spending automatically or manually" 14px `#8C7A9B`
+- [ ] [ Get Started ] button — bg `#3D1152`, white text, border-radius 10px, full width
+- [ ] Tapping Get Started → navigate to Screen 2
+
+### 5.5b. Screen 2 — Auto-Import Setup (Optional)
+- [ ] Create `app/onboarding/auto-import.tsx`
+- [ ] Heading: "Want transactions recorded automatically?" 20px weight 500 `#1C0F2E`
+- [ ] Subtitle: "Forward your bank or e-wallet emails and we'll do the rest." 14px `#8C7A9B`
+- [ ] Show user's unique intake address (copyable, e.g. user_abc123@intake.yourapp.com) — read from API or generate
+- [ ] Keyword management: input field + add button, active keyword chips (e.g. gopay, bca) with X to remove
+- [ ] Expandable step-by-step Gmail filter setup guide (collapsed by default)
+- [ ] [ Set Up Later ] button — outlined `#3D1152`, skips to Screen 3 without penalty
+- [ ] [ Done ] button — bg `#3D1152`, white text, proceeds to Screen 3
+- [ ] Both buttons always visible — neither blocks the user
+
+### 5.5c. Screen 3 — Manual Entry Intro
+- [ ] Create `app/onboarding/manual-entry.tsx`
+- [ ] Heading: "You can always add transactions manually" 20px weight 500 `#1C0F2E`
+- [ ] Subtitle: "Tap the + button anytime to record cash or any transaction" 14px `#8C7A9B`
+- [ ] [ Go to Dashboard ] button — bg `#3D1152`, white text, border-radius 10px, full width
+- [ ] Tapping Go to Dashboard → navigate to main app (bottom tabs), mark onboarding complete
+
+### 5.5d. Onboarding Logic
+- [ ] Track onboarding completion per user (store flag in AsyncStorage or Supabase user metadata)
+- [ ] After login: check onboarding flag → if not completed, show onboarding flow; if completed, go to main app
+- [ ] Onboarding flow uses horizontal swipe or next/back buttons (consistent navigation)
+- [ ] User can always access auto-import setup later from Profile → Transaction Import section (Phase 2.5)
+- [ ] Both methods (auto + manual) available simultaneously — manual entry always available regardless of auto-import status
+
+---
+
 ## Step 6: Tab Navigation
 
 ### 6a. Create 5-Tab Layout
@@ -262,6 +303,7 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 
 ### 8d. Save Transaction
 - [ ] Insert new transaction via `use-transactions` hook
+- [ ] Set `source = 'manual'` by default on all new transactions (PRD v1.5 Section 3 — transactions.source)
 - [ ] Optimistic update on TanStack Query cache
 - [ ] Navigate back after save
 - [ ] Show toast on success/error
@@ -388,6 +430,45 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 
 ---
 
+## Step 13: Release Readiness (Pre-Play Store)
+
+These are not Phase 1 features, but they are the gate between "Phase 1 done" and "Phase 1 shipped." Complete before submitting to Google Play.
+
+### 13a. Android Packaging
+- [ ] Create `eas.json` with `preview` (APK) and `production` (AAB) profiles
+- [ ] Set `android.package` in `app.json` (e.g. `com.yourdomain.moneytracker`)
+- [ ] Set `android.versionCode` in `app.json`
+- [ ] Run first `eas build --profile preview` to catch native linking issues (NativeWind, date-picker, bottom-sheet)
+- [ ] Store secrets in EAS Environment Variables (`eas env:create`), not committed `.env`
+
+### 13b. Store Policy Compliance
+- [ ] Account deletion: Supabase Edge Function using service role key (cascade delete across all tables per PRD §16.4)
+- [ ] Account deletion: in-app button in Profile tab with confirm dialog
+- [ ] Account deletion: web-hosted fallback page (Google requires both in-app + web option since April 2023)
+- [ ] Privacy policy hosted at public URL (Cloudflare Pages or GitHub Pages) — content mapped in PRD §16.5
+- [ ] Data safety form filled in Play Console (maps 1:1 to PRD §16.1 data table)
+- [ ] Declare app does NOT handle payments or store payment instruments (avoid financial-app extra scrutiny)
+
+### 13c. OAuth Hardening
+- [ ] Add explicit `redirectUri` per platform in Google auth request (current code relies on Expo Go defaults, breaks in standalone)
+- [ ] Configure per-platform Google OAuth client IDs in Google Cloud Console (Android, iOS, Web)
+- [ ] Test full Google Sign In flow on a production APK build, not just Expo Go
+
+### 13d. Observability
+- [ ] Add `@sentry/react-native` dependency (listed in PRD §2 but not in package.json)
+- [ ] Configure Sentry DSN via EAS env var
+- [ ] Verify crash reports arrive from a staging build
+
+### 13e. Store Listing Assets
+- [ ] App icon 512×512 PNG
+- [ ] Feature graphic 1024×500 PNG
+- [ ] 4–8 screenshots (use `react-native-view-shot` or manual emulator captures)
+- [ ] Short description (80 chars max)
+- [ ] Full description (4000 chars max)
+- [ ] Content rating questionnaire completed in Play Console
+
+---
+
 ## Verification
 
 Before marking Phase 1 complete, verify each:
@@ -395,7 +476,10 @@ Before marking Phase 1 complete, verify each:
 - [ ] Google OAuth login works (login screen → dashboard)
 - [ ] Splash screen auto-redirects correctly (with/without session)
 - [ ] ~~"Continue as Guest" works~~ — Removed in PRD v1.3
+- [ ] Onboarding flow shown on first login only (3 screens: Welcome → Auto-Import → Manual Entry)
+- [ ] Onboarding skipped on subsequent logins
 - [ ] Can create, edit, delete transactions
+- [ ] New transactions have `source = 'manual'` by default
 - [ ] Can create, edit, delete custom categories
 - [ ] Master categories visible, read-only (no edit/delete affordance)
 - [ ] Category picker screen works from Add Transaction
@@ -417,5 +501,122 @@ Before marking Phase 1 complete, verify each:
 ---
 
 *Created: April 2026*
-*Updated: May 2026 — aligned with PRD v1.3 (guest mode removed, dashboard simplified, AI agent expanded). Guest mode code retained but not required for Phase 1.*
+*Updated: May 2026 — aligned with PRD v1.5 (guest mode removed, onboarding flow added, source field added, privacy/RLS sections noted). Guest mode code retained but not required for Phase 1.*
 *For: MoneyTracker App Phase 1 Implementation*
+
+---
+
+## Tech Debt (Fix Before Phase 1 Complete)
+
+Shortcuts or incorrect code that already exists in the codebase. These violate project conventions and should be fixed — not just documented.
+
+### TD-1: Dead guest-mode code in auth context
+- **File:** `src/contexts/auth-context.tsx`
+- **Issue:** `signInAsGuest`, `isGuest`, `GUEST_KEY`, and `migrateGuestDataToSupabase()` call still present. Guest mode was removed in PRD v1.3 (see Step 3d). Code is dead surface area that will confuse Play Store review.
+- **Convention violated:** `rules/common/coding-style.md` — no dead code / backwards-compat hacks
+- **Fix:** Remove guest state, methods, storage key, and the migrate-guest import/call. Also delete `src/stores/guest-data-store.ts` and `src/lib/migrate-guest.ts` if no longer referenced.
+
+### TD-2: Android adaptive icon uses wrong background color
+- **File:** `app.json` (line ~17)
+- **Issue:** `adaptiveIcon.backgroundColor` is `#E6F4FE` (generic Expo light blue). Violates locked PRD palette.
+- **Convention violated:** PRD §13 / §15 — palette is locked (Parchment `#FAF7F5` or Plum `#3D1152`)
+- **Fix:** Change `#E6F4FE` → `#FAF7F5`
+
+### TD-3: Google OAuth missing explicit redirect URIs
+- **File:** `src/contexts/auth-context.tsx` (lines ~33-38)
+- **Issue:** `Google.useAuthRequest` passes only `clientId` with no `redirectUri`. Works in Expo Go, breaks in standalone production builds. Also uses a single client ID — production needs per-platform client IDs (Android, iOS, Web).
+- **Convention violated:** Production readiness; Phase 1 Verification requires Google Sign In to work end-to-end
+- **Fix:** Add explicit `redirectUri` per platform using `AuthSession.makeRedirectUri()`. Configure separate Google OAuth client IDs per platform in Google Cloud Console.
+
+### TD-4: Insecure auth session storage (AsyncStorage)
+- **File:** `src/lib/supabase.ts` (line 14)
+- **Issue:** Supabase client uses default storage (AsyncStorage) for auth session tokens. AsyncStorage is unencrypted and readable by anyone with device access. Unacceptable for a finance app handling transaction data.
+- **Convention violated:** `rules/common/security.md` — security-first; finance app baseline
+- **Fix:** Install `expo-secure-store`, pass a SecureStore-backed storage adapter to `createClient()`:
+  ```typescript
+  const storage = {
+    getItem: SecureStore.getItemAsync,
+    setItem: SecureStore.setItemAsync,
+    removeItem: SecureStore.deleteItemAsync,
+  };
+  createClient(url, key, { auth: { storage, autoRefreshToken: true, persistSession: true } });
+  ```
+
+### TD-5: `source` CHECK constraint missing 'email' value
+- **File:** `sql/01_create_phase1_tables.sql` (line 62)
+- **Issue:** Column defined as `CHECK (source IN ('manual', 'split_bill'))` but PRD §3 requires enum `manual | split_bill | email`. When Phase 2.5 email auto-import ships, every INSERT with `source = 'email'` will fail at the DB level.
+- **Convention violated:** PRD §3 schema definition; forward compatibility
+- **Fix:** Update constraint to `CHECK (source IN ('manual', 'split_bill', 'email'))`. Run as a migration before any data accumulates. Also update `src/types/database.ts` to match.
+
+### TD-6: Currency default 'USD' instead of 'IDR'
+- **File:** `sql/01_create_phase1_tables.sql` (line 53)
+- **Issue:** `DEFAULT 'USD'` — the app is for Indonesian users (UU PDP compliance, GoPay/BCA/Mandiri, IDR). StitchBrief even shows "$1,250.00" examples that should be "Rp1.250.000" formatting. Wrong default currency breaks every new transaction.
+- **Convention violated:** PRD target market (Indonesia); UX correctness
+- **Fix:** Change `DEFAULT 'USD'` → `DEFAULT 'IDR'`. Update StitchBrief currency format examples to use Rp prefix and Indonesian thousand separators.
+
+### TD-7: Zero test infrastructure despite 80% coverage requirement
+- **Files:** `package.json`, entire `src/` and `app/` directories
+- **Issue:** AGENTS.md and `rules/common/testing.md` require 80%+ test coverage (unit + integration + E2E). There is **no testing framework installed** — no Jest, Vitest, React Native Testing Library, or Playwright in dependencies. No test files exist anywhere. This is the single biggest gap blocking Phase 1 completion.
+- **Convention violated:** `rules/common/testing.md` — 80% minimum; AGENTS.md Core Principle #2 (Test-Driven)
+- **Fix:** Set up before continuing Step 4:
+  ```bash
+  npm install -D jest @testing-library/react-native @testing-library/jest-native @types/jest
+  npm install -D jest-expo  # Expo-specific Jest preset
+  ```
+  - Add `jest.config.js` with `preset: 'jest-expo'`
+  - Add `"test": "jest"` script to package.json
+  - Create `src/__tests__/` directory
+  - Write tests for existing code first: `auth-context`, `supabase` client, `colors`/`categories`/`typography` constants
+  - All new Step 4+ code must be test-first per `tdd-workflow` skill
+
+---
+
+## Architecture Recommendations (For Review)
+
+These are not bugs or tech debt — they're design decisions worth reconsidering before committing to the current PRD scope. Each needs a decision (accept / reject / defer) before the affected phase begins.
+
+### AR-1: Re-scope FastAPI backend (affects Phase 2)
+- **Current plan:** Full FastAPI backend duplicating `/transactions`, `/categories`, `/summary` CRUD ([PRD §6.3](./MoneyTracker_PRD_v1.5.md)).
+- **Recommendation:** Supabase already provides PostgREST auto-API + RLS. The Vite web dashboard can call Supabase directly with the user's JWT. FastAPI is only needed for operations requiring the service role key or third-party secrets:
+  - ✅ `/email-import` (needs service role + Cloudflare Worker auth)
+  - ✅ Account deletion (needs service role for cascade delete)
+  - ✅ Future AI chat agent proxy (needs API keys)
+  - ❌ `/transactions` CRUD — use Supabase client + RLS directly
+  - ❌ `/categories` CRUD — use Supabase client + RLS directly
+  - ❌ `/summary` aggregation — use Supabase RPC (Postgres function) directly
+- **Impact:** Cuts Phase 2 backend scope by ~50%. Less infra to host, monitor, secure.
+- **Decision needed:** Before Phase 2 planning.
+
+### AR-2: Add `@shopify/flash-list` for transaction lists (Phase 1)
+- **Issue:** StitchBrief Screen 4 specifies infinite scroll transaction list. Stock `FlatList` janks above ~200 items. Retrofitting later means rewriting every list component.
+- **Recommendation:** Install now, use in all list components from day one.
+- **Impact:** Drop-in replacement for FlatList, ~5× faster, same API.
+- **Decision needed:** Before Step 9 (Home Dashboard) and Step 10 (Transaction List).
+
+### AR-3: Add recurring transactions feature (Phase 1 or 2)
+- **Gap:** Most users have ~10 recurring expenses (rent, phone, subscriptions). Without recurring transactions, they manually re-enter every month and churn. This is higher user value than OCR or AI chat.
+- **Recommendation:** Add before Phase 3 (OCR) / Phase 4 (AI). Schema is minimal:
+  - New table: `recurring_transactions` (id, user_id, amount, category_id, type, frequency, next_date, is_active)
+  - Supabase `pg_cron` job materializes due recurring transactions into `transactions` table
+- **Impact:** Significantly reduces user churn; small implementation cost.
+- **Decision needed:** Whether to add to Phase 1 (scope creep) or make it Phase 2 priority.
+
+### AR-4: Move email auto-import setup out of onboarding (Phase 2.5)
+- **Issue:** PRD §5.2 Screen 2 puts email auto-import setup in onboarding. Two problems:
+  1. Users haven't seen app value yet — won't configure Gmail filters for an app they just opened
+  2. Setup is 5+ steps with Gmail verification — massive drop-off
+- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: *"Want transactions imported automatically? Set up later in Profile."*
+- **Impact:** Higher onboarding completion rate; lower churn.
+- **Decision needed:** Before Step 5.5 (Onboarding Flow) implementation.
+
+### AR-5: Drop per-transaction currency selector (Phase 1)
+- **Issue:** StitchBrief Screen 5 puts a currency selector on every transaction. Most users have one currency (IDR). Per-transaction currency adds complexity (FX rates, multi-currency totals) you don't need.
+- **Recommendation:** Profile-level default currency only. Remove currency row from Add Transaction screen. Schema `currency` column stays (always = user's default) for future flexibility, but no UI.
+- **Impact:** Simpler UX, less scope, fewer edge cases.
+- **Decision needed:** Before Step 8 (Add Transaction Screen) implementation.
+
+### AR-6: Add CSV export in Phase 1 (UU PDP legal requirement)
+- **Issue:** PRD §16.3 lists "Right to data portability" as a UU PDP obligation, mapped to "Export to CSV via web dashboard (Phase 2)." But you can't ship to Play Store without fulfilling data portability — it's a legal right, not a feature.
+- **Recommendation:** Add basic CSV export in Phase 1 Profile tab before Play Store submission. ~30 lines of code using a simple CSV builder + `expo-sharing` or `expo-file-system`.
+- **Impact:** Legal compliance for Phase 5 launch; unblocks Play Store submission.
+- **Decision needed:** Whether to add to Phase 1 scope or accept launch delay until Phase 2.
