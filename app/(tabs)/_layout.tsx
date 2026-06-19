@@ -1,6 +1,4 @@
 import { Tabs } from "expo-router";
-import React from "react";
-import { View, Text } from "react-native";
 
 export default function TabLayout() {
   return (
@@ -23,12 +21,6 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

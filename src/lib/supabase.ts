@@ -1,5 +1,7 @@
+import { Platform } from "react-native";
 import { createClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { Database } from "@/src/types/database";
 
@@ -13,19 +15,45 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 /**
- * SecureStore-backed adapter for Supabase auth session persistence.
- * AsyncStorage is unencrypted and unsuitable for a finance app's session tokens.
- * expo-secure-store uses the Android Keystore / iOS Keychain.
+ * Auth session storage with graceful SecureStore → AsyncStorage fallback.
+ *
+ * Native: tries expo-secure-store (encrypted) first, falls back to AsyncStorage
+ *         if the native module is unavailable (old Expo Go, emulator issues).
+ * Web: AsyncStorage directly (app is Android-only per PRD).
  */
-const secureStorage = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-};
+const authStorage = Platform.OS === "web"
+  ? {
+      getItem: (key: string) => AsyncStorage.getItem(key),
+      setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
+      removeItem: (key: string) => AsyncStorage.removeItem(key),
+    }
+  : {
+      getItem: async (key: string) => {
+        try {
+          return await SecureStore.getItemAsync(key);
+        } catch {
+          return await AsyncStorage.getItem(key);
+        }
+      },
+      setItem: async (key: string, value: string) => {
+        try {
+          await SecureStore.setItemAsync(key, value);
+        } catch {
+          await AsyncStorage.setItem(key, value);
+        }
+      },
+      removeItem: async (key: string) => {
+        try {
+          await SecureStore.deleteItemAsync(key);
+        } catch {
+          await AsyncStorage.removeItem(key);
+        }
+      },
+    };
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: secureStorage,
+    storage: authStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,

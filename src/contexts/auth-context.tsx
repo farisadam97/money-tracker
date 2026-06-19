@@ -22,7 +22,10 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  /** Dev-only: bypasses auth to test UI. No data access (RLS blocks). */
+  devBypass: () => void;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -87,10 +90,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await promptAsync();
   }, [promptAsync]);
 
+  const signInWithEmail = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
+  };
+
+  const devBypass = async () => {
+    if (!__DEV__) return;
+    setIsLoading(true);
+    try {
+      // Anonymous auth creates a real user with a real UUID — no OAuth needed.
+      // RLS works normally. Data persists in Supabase under this user.
+      // Enable in: Supabase Dashboard → Authentication → Providers → Anonymous
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      // onAuthStateChange will set session + user automatically
+    } catch (err) {
+      // If anonymous auth not enabled in Supabase, fall back to fake user
+      // (UI-only testing — no data access)
+      console.warn(
+        "[devBypass] Anonymous auth failed. Enable it in Supabase Dashboard → Authentication → Providers → Anonymous.",
+        err
+      );
+      setSession({} as Session);
+      setUser({
+        id: "00000000-0000-0000-0000-000000000000",
+        email: "dev@localhost",
+        aud: "authenticated",
+        role: "authenticated",
+        app_metadata: {},
+        user_metadata: { full_name: "Dev User" },
+        created_at: new Date().toISOString(),
+      } as unknown as User);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -100,7 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         signInWithGoogle,
+        signInWithEmail,
         signOut,
+        devBypass,
       }}
     >
       {children}
