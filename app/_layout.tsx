@@ -1,6 +1,6 @@
-import "../global.css";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import "../global.css";
 
 import { AuthProvider } from "@/src/contexts/auth-context";
 import { QueryProvider } from "@/src/providers/query-provider";
@@ -24,6 +24,10 @@ export default function RootLayout() {
             <Stack.Screen name="splash" />
             <Stack.Screen name="login" />
             <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="add-transaction"
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="dark" />
