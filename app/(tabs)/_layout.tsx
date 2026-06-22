@@ -1,4 +1,5 @@
 import { Tabs, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   House,
   LayoutList,
@@ -36,6 +37,7 @@ const TABS: TabConfig[] = [
 
 export default function TabLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -47,7 +49,8 @@ export default function TabLayout() {
           backgroundColor: Colors.surface,
           borderTopWidth: 0.5,
           borderTopColor: Colors.border,
-          height: 56,
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: 11,

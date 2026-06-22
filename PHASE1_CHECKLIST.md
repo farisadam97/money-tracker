@@ -665,13 +665,13 @@ These are not bugs or tech debt — they're design decisions worth reconsidering
 - **Decision needed:** Whether to add to Phase 1 (scope creep) or make it Phase 2 priority.
 
 ### AR-4: Move email auto-import setup out of onboarding (Phase 2.5)
-
 - **Issue:** PRD §5.2 Screen 2 puts email auto-import setup in onboarding. Two problems:
   1. Users haven't seen app value yet — won't configure Gmail filters for an app they just opened
   2. Setup is 5+ steps with Gmail verification — massive drop-off
-- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: _"Want transactions imported automatically? Set up later in Profile."_
+- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: *"Want transactions imported automatically? Set up later in Profile."*
 - **Impact:** Higher onboarding completion rate; lower churn.
 - **Decision needed:** Before Step 5.5 (Onboarding Flow) implementation.
+- **Status:** ✅ DECIDED — Build teaser version. One-screen summary ("Track automatically, too — set up anytime in Profile"), no copyable intake address, no keyword form, no Gmail guide. Full setup moves to Profile → Transaction Import in Phase 2.5 when backend exists. User confirmed: curiosity-driven discovery > forced form.
 
 ### AR-5: Drop per-transaction currency selector (Phase 1)
 
