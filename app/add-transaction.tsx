@@ -1,11 +1,12 @@
 import { useRouter } from "expo-router";
 import {
+  ArrowDownCircle,
+  ArrowUpCircle,
   CalendarDays,
   Check,
   ChevronLeft,
   ChevronRight,
   FileText,
-  Globe,
   Trash2,
 } from "lucide-react-native";
 import { useState } from "react";
@@ -38,8 +39,29 @@ import type {
   TransactionType,
 } from "@/src/types/database";
 
+/** Formats a number string with thousand separators (e.g. 25000 → 25,000) */
+function formatWithThousandSeparator(value: string): string {
+  const cleaned = value.replace(/[^0-9]/g, "");
+  if (!cleaned) return "";
+  return parseInt(cleaned, 10).toLocaleString("en-US");
+}
+
+/** Strips formatting to get raw number string */
+function parseAmount(display: string): string {
+  return display.replace(/[^0-9]/g, "");
+}
+
+/** Formats date for display */
+function formatDate(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 interface AddTransactionProps {
-  // Edit mode: pass existing transaction
   transaction?: TransactionRow;
 }
 
@@ -57,21 +79,18 @@ export default function AddTransactionScreen({
   const deleteMutation = useDeleteTransaction();
   const { data: categories } = useCategoriesQuery();
 
-  // Form state
-  const [amount, setAmount] = useState(
-    transaction ? String(transaction.amount) : "",
+  // Form state — amount stored as display string with separators
+  const [amountDisplay, setAmountDisplay] = useState(
+    transaction ? formatWithThousandSeparator(String(transaction.amount)) : "",
   );
   const [type, setType] = useState<TransactionType>(
     transaction?.type ?? "expense",
   );
   const [selectedCategory, setSelectedCategory] = useState<CategoryRow | null>(
-    null, // Will be set from transaction in edit mode, or via picker
+    null,
   );
   const [date, setDate] = useState(
     transaction?.date ?? new Date().toISOString().slice(0, 10),
-  );
-  const [currency, setCurrency] = useState(
-    transaction?.currency ?? defaultCurrency,
   );
   const [note, setNote] = useState(transaction?.note ?? "");
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -101,16 +120,21 @@ export default function AddTransactionScreen({
     }
   });
 
-  const canSave = parseFloat(amount) > 0 && selectedCategory !== null;
+  const rawAmount = parseAmount(amountDisplay);
+  const canSave = parseInt(rawAmount, 10) > 0 && selectedCategory !== null;
   const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  const handleAmountChange = (v: string) => {
+    setAmountDisplay(formatWithThousandSeparator(v));
+  };
 
   const handleSave = async () => {
     if (!canSave || !user) return;
 
     const payload = {
       user_id: user.id,
-      amount: parseFloat(amount),
-      currency,
+      amount: parseInt(rawAmount, 10),
+      currency: defaultCurrency,
       category_id: selectedCategory!.id,
       type,
       note: note.trim() || null,
@@ -177,8 +201,8 @@ export default function AddTransactionScreen({
         <View style={styles.amountContainer}>
           <Text style={styles.currencySymbol}>Rp</Text>
           <TextInput
-            value={amount}
-            onChangeText={(v) => setAmount(v.replace(/[^0-9.]/g, ""))}
+            value={amountDisplay}
+            onChangeText={handleAmountChange}
             placeholder="0"
             placeholderTextColor={Colors.textSecondary}
             keyboardType="numeric"
@@ -191,11 +215,17 @@ export default function AddTransactionScreen({
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             onPress={() => setType("expense")}
+            activeOpacity={0.7}
             style={[
               styles.toggleButton,
               type === "expense" && styles.toggleActiveExpense,
             ]}
           >
+            <ArrowDownCircle
+              size={16}
+              color={type === "expense" ? Colors.surface : Colors.textSecondary}
+              strokeWidth={2.5}
+            />
             <Text
               style={[
                 styles.toggleText,
@@ -207,11 +237,17 @@ export default function AddTransactionScreen({
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setType("income")}
+            activeOpacity={0.7}
             style={[
               styles.toggleButton,
               type === "income" && styles.toggleActiveIncome,
             ]}
           >
+            <ArrowUpCircle
+              size={16}
+              color={type === "income" ? Colors.surface : Colors.textSecondary}
+              strokeWidth={2.5}
+            />
             <Text
               style={[
                 styles.toggleText,
@@ -246,29 +282,13 @@ export default function AddTransactionScreen({
             onPress={() => setShowCategoryPicker(true)}
           />
 
-          {/* Date row */}
+          {/* Date row — display only for Phase 1 (native picker needs dev build) */}
           <FormRow
             icon={CalendarDays}
             iconBg={Colors.plumTint}
             iconColor={Colors.plum}
             label="Date"
             value={formatDate(date)}
-            onPress={() => {
-              // Simplified: for Phase 1, just use today. Date picker in Phase 1.5.
-              // Native date picker requires modal setup.
-            }}
-          />
-
-          {/* Currency row */}
-          <FormRow
-            icon={Globe}
-            iconBg={Colors.plumTint}
-            iconColor={Colors.plum}
-            label="Currency"
-            value={currency}
-            onPress={() => {
-              // Simplified: use default currency. Full picker in Phase 1.5.
-            }}
           />
 
           {/* Note row */}
@@ -488,17 +508,6 @@ function CategorySection({
   );
 }
 
-// --- Helpers ---
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 // --- Styles ---
 
 const styles = StyleSheet.create({
@@ -544,22 +553,36 @@ const styles = StyleSheet.create({
   },
   toggleContainer: {
     flexDirection: "row",
-    backgroundColor: Colors.border,
-    borderRadius: 10,
-    padding: 3,
+    backgroundColor: Colors.plumTint,
+    borderRadius: 14,
+    padding: 4,
     marginBottom: 24,
+    gap: 4,
   },
   toggleButton: {
     flex: 1,
-    paddingVertical: 10,
+    flexDirection: "row",
+    paddingVertical: 12,
     alignItems: "center",
-    borderRadius: 8,
+    justifyContent: "center",
+    borderRadius: 10,
+    gap: 6,
   },
   toggleActiveExpense: {
     backgroundColor: Colors.expense,
+    shadowColor: Colors.expense,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   toggleActiveIncome: {
     backgroundColor: Colors.income,
+    shadowColor: Colors.income,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   toggleText: {
     color: Colors.textSecondary,
@@ -568,6 +591,7 @@ const styles = StyleSheet.create({
   },
   toggleTextActive: {
     color: Colors.surface,
+    fontWeight: "600",
   },
   formSection: {
     backgroundColor: Colors.surface,
