@@ -1,21 +1,21 @@
-import { useState, useMemo } from "react";
+import { useRouter } from "expo-router";
+import { Inbox, Search } from "lucide-react-native";
+import { useMemo, useState } from "react";
 import {
-  View,
-  Text,
   ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { Search, Inbox } from "lucide-react-native";
 
-import { Colors } from "@/src/constants/colors";
-import { useTransactionsQuery } from "@/src/hooks/use-transactions";
-import { useCategoriesQuery } from "@/src/hooks/use-categories";
-import { resolveIcon } from "@/src/constants/icon-map";
 import { getCategoryColors } from "@/src/constants/categories";
+import { Colors } from "@/src/constants/colors";
+import { resolveIcon } from "@/src/constants/icon-map";
+import { useCategoriesQuery } from "@/src/hooks/use-categories";
+import { useTransactionsQuery } from "@/src/hooks/use-transactions";
 import type { TransactionRow, TransactionType } from "@/src/types/database";
 
 type FilterTab = "all" | TransactionType;
@@ -55,9 +55,7 @@ export default function TransactionsScreen() {
   const categoryName = (catId: string) => getCatName(catId, categories);
 
   return (
-    <View
-      style={[styles.container, { paddingTop: insets.top + 12 }]}
-    >
+    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       {/* Title */}
       <Text style={styles.screenTitle}>Transactions</Text>
 
@@ -84,10 +82,7 @@ export default function TransactionsScreen() {
           <TouchableOpacity
             key={tab}
             onPress={() => setFilter(tab)}
-            style={[
-              styles.filterTab,
-              filter === tab && styles.filterTabActive,
-            ]}
+            style={[styles.filterTab, filter === tab && styles.filterTabActive]}
           >
             <Text
               style={[
@@ -210,7 +205,7 @@ function getCatName(
 }
 
 function formatCurrency(amount: number): string {
-  return amount.toLocaleString("id-ID");
+  return "Rp " + amount.toLocaleString("id-ID");
 }
 
 interface DateGroup {

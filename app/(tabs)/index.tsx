@@ -1,14 +1,14 @@
-import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ArrowDownCircle, ArrowUpCircle, ChevronRight } from "lucide-react-native";
+import { ArrowDownCircle, ArrowUpCircle } from "lucide-react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Colors } from "@/src/constants/colors";
-import { useAuth } from "@/src/hooks/use-auth";
-import { useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
-import { useCategoriesQuery } from "@/src/hooks/use-categories";
-import { resolveIcon } from "@/src/constants/icon-map";
 import { getCategoryColors } from "@/src/constants/categories";
+import { Colors } from "@/src/constants/colors";
+import { resolveIcon } from "@/src/constants/icon-map";
+import { useAuth } from "@/src/hooks/use-auth";
+import { useCategoriesQuery } from "@/src/hooks/use-categories";
+import { useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
 import type { TransactionRow } from "@/src/types/database";
 
 export default function HomeScreen() {
@@ -57,22 +57,44 @@ export default function HomeScreen() {
 
       {/* Balance card */}
       <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>AVAILABLE BALANCE</Text>
+        <View style={styles.balanceHeaderRow}>
+          <Text style={styles.balanceLabel}>AVAILABLE BALANCE</Text>
+          <Text style={styles.monthLabel}>
+            {now.toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
+          </Text>
+        </View>
         <Text style={styles.balanceAmount}>{formatCurrency(balance)}</Text>
 
         <View style={styles.incomeExpenseRow}>
           <View style={styles.incomeExpenseItem}>
-            <View style={[styles.ieIcon, { backgroundColor: Colors.incomeTint }]}>
-              <ArrowDownCircle size={16} color={Colors.income} strokeWidth={2.5} />
+            <View
+              style={[styles.ieIcon, { backgroundColor: Colors.incomeTint }]}
+            >
+              <ArrowDownCircle
+                size={14}
+                color={Colors.income}
+                strokeWidth={2.5}
+              />
             </View>
             <View>
               <Text style={styles.ieLabel}>Income</Text>
-              <Text style={styles.ieValueIncome}>{formatCurrency(totalIncome)}</Text>
+              <Text style={styles.ieValueIncome}>
+                {formatCurrency(totalIncome)}
+              </Text>
             </View>
           </View>
           <View style={styles.incomeExpenseItem}>
-            <View style={[styles.ieIcon, { backgroundColor: Colors.expenseTint }]}>
-              <ArrowUpCircle size={16} color={Colors.expense} strokeWidth={2.5} />
+            <View
+              style={[styles.ieIcon, { backgroundColor: Colors.expenseTint }]}
+            >
+              <ArrowUpCircle
+                size={16}
+                color={Colors.expense}
+                strokeWidth={2.5}
+              />
             </View>
             <View>
               <Text style={styles.ieLabel}>Expenses</Text>
@@ -82,6 +104,34 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
+
+        {/* Progress bar */}
+        {totalIncome > 0 ? (
+          <View style={styles.progressSection}>
+            <View style={styles.progressBarBg}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${Math.max(4, Math.min(100, (totalExpense / totalIncome) * 100))}%`,
+                  },
+                ]}
+              />
+            </View>
+            <View style={styles.progressLabelRow}>
+              <Text style={styles.progressLabel}>
+                {Math.round((totalExpense / totalIncome) * 100)}% spent
+              </Text>
+              <Text style={styles.progressLabel}>
+                {Math.max(
+                  0,
+                  100 - Math.round((totalExpense / totalIncome) * 100),
+                )}
+                % saved
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </View>
 
       {/* Recent transactions header */}
@@ -105,13 +155,15 @@ export default function HomeScreen() {
             </Text>
           </View>
         ) : (
-          monthTransactions.slice(0, 5).map((txn) => (
-            <TransactionRow
-              key={txn.id}
-              transaction={txn}
-              categoryName={categoryName(txn.category_id)}
-            />
-          ))
+          monthTransactions
+            .slice(0, 5)
+            .map((txn) => (
+              <TransactionRow
+                key={txn.id}
+                transaction={txn}
+                categoryName={categoryName(txn.category_id)}
+              />
+            ))
         )}
       </View>
     </ScrollView>
@@ -128,9 +180,7 @@ function TransactionRow({
   categoryName: string;
 }) {
   const colors = getCategoryColors(categoryName);
-  const Icon = resolveIcon(
-    categoryName === "Other" ? "Tag" : categoryName
-  );
+  const Icon = resolveIcon(categoryName === "Other" ? "Tag" : categoryName);
   const isIncome = transaction.type === "income";
 
   return (
@@ -166,7 +216,7 @@ function TransactionRow({
 // --- Helpers ---
 
 function formatCurrency(amount: number): string {
-  return amount.toLocaleString("id-ID");
+  return "Rp " + amount.toLocaleString("id-ID");
 }
 
 // --- Styles ---
@@ -198,11 +248,22 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
   },
+  balanceHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
   balanceLabel: {
     color: "rgba(255,255,255,0.7)",
     fontSize: 11,
     fontWeight: "500",
     letterSpacing: 0.5,
+  },
+  monthLabel: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 11,
+    fontWeight: "400",
   },
   balanceAmount: {
     color: Colors.surface,
@@ -213,17 +274,18 @@ const styles = StyleSheet.create({
   },
   incomeExpenseRow: {
     flexDirection: "row",
-    gap: 24,
+    justifyContent: "space-between",
   },
   incomeExpenseItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    flex: 1,
   },
   ieIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -240,6 +302,29 @@ const styles = StyleSheet.create({
     color: Colors.surface,
     fontSize: 14,
     fontWeight: "500",
+  },
+  progressSection: {
+    marginTop: 16,
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: Colors.tangerine,
+    borderRadius: 3,
+  },
+  progressLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 6,
+  },
+  progressLabel: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 11,
   },
   sectionHeader: {
     flexDirection: "row",
