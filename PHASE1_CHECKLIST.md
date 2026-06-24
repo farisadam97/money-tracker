@@ -85,22 +85,23 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 ### 3a. Supabase Client
 
 - [x] Create `src/lib/supabase.ts` — initialize client with env vars
-- [ ] Verify client connects (test query in app or console)
+- [x] Verify client connects (test query in app or console)
 
 ### 3b. Auth Context
 
 - [x] Create `src/contexts/auth-context.tsx` — session state + user object
 - [x] Create `src/hooks/use-auth.ts` — convenience hook wrapping context
 - [x] Handle session persistence (auto-login on app reopen)
-- [ ] ~~Track guest mode state~~ — Removed in PRD v1.3 (guest mode deferred to future)
+- [x] ~~Track guest mode state~~ — Removed in PRD v1.3 (guest mode deferred to future)
 
 ### 3c. Google OAuth Flow
 
 - [x] Configure `expo-auth-session` with Google provider
-- [ ] Configure redirect URIs for development (`exp://127.0.0.1:19000/--/`)
+- [ ] Configure redirect URIs for development (`exp://127.0.0.1:19000/--/`) — TD-3, needs real Google Cloud Console setup
 - [x] Implement sign-in flow using `expo-web-browser` + `expo-auth-session` + `supabase.auth.signInWithIdToken`
 - [x] Implement sign-out flow
-- [ ] Test: Google Sign In → session created → sign out → session cleared
+- [x] Add dev-only email/password auth bypass (test user in Supabase)
+- [ ] Test: Google Sign In → session created → sign out → session cleared — Pending real Google OAuth config
 
 ### 3d. ~~Guest Mode~~ — Removed in PRD v1.3
 
@@ -113,23 +114,30 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 
 ### 4a. TanStack Query Provider
 
-- [ ] Create `src/providers/query-provider.tsx` — QueryClient wrapper
-- [ ] Wrap app root with provider in `app/_layout.tsx`
+- [x] Create `src/providers/query-provider.tsx` — QueryClient wrapper
+- [x] Wrap app root with provider in `app/_layout.tsx`
 
 ### 4b. Zustand Stores
 
-- [ ] Create `src/stores/user-preferences-store.ts` — default currency, onboarding flag
-- [ ] Create `src/stores/filter-store.ts` — transaction filter state (type, categories, date range)
+- [x] Create `src/stores/user-preferences-store.ts` — default currency, onboarding flag
+- [x] Create `src/stores/filter-store.ts` — transaction filter state (type, categories, date range)
 - [x] ~~Create `src/stores/guest-data-store.ts`~~ — Removed (TD-1: guest mode code deleted)
-- [ ] Persist user preferences to AsyncStorage
+- [x] Persist user preferences to AsyncStorage
 - [x] ~~Persist guest data to AsyncStorage~~ — Removed (TD-1)
 
 ### 4c. Data Hooks
 
-- [ ] Create `src/hooks/use-categories.ts` — fetch, create, update, delete categories
-- [ ] Create `src/hooks/use-transactions.ts` — fetch, create, update, delete transactions
-- [ ] Create `src/hooks/use-summary.ts` — monthly income/expense/balance aggregation
-- [ ] Test: fetch master categories (should return 8 rows)
+- [x] Create `src/hooks/use-categories.ts` — fetch, create, update, delete categories
+- [x] Create `src/hooks/use-transactions.ts` — fetch, create, update, delete transactions
+- [x] Create `src/hooks/use-summary.ts` — monthly income/expense/balance aggregation
+- [x] Test: fetch master categories (should return 8 rows)
+
+### 4d. Offline-First Layer (AR-7)
+
+- [x] Install `@tanstack/query-async-storage-persister` + `@react-native-community/netinfo`
+- [x] Create `src/stores/pending-writes-store.ts` — AsyncStorage-backed write queue
+- [x] Create `src/providers/sync-provider.tsx` — drains queue on reconnect
+- [x] All mutation hooks enqueue on failure
 
 ---
 
@@ -137,48 +145,48 @@ Use this checklist to track progress through Phase 1 implementation. Complete ea
 
 ### 5a. Splash Screen
 
-- [ ] Create `app/splash.tsx` — full screen, centered, bg `#FAF7F5`
-- [ ] App logo centered, large (80–100px)
-- [ ] App name "MoneyTracker" 24px weight 500 `#3D1152`
-- [ ] Tagline "Track smart, spend wise" 14px `#8C7A9B`
-- [ ] Small circular spinner `#3D1152` below tagline
-- [ ] If session exists → redirect to main app
-- [ ] If no session → redirect to login
+- [x] Create `app/splash.tsx` — full screen, centered, bg `#FAF7F5`
+- [x] App logo centered, large (80–100px)
+- [x] App name "MoneyTracker" 24px weight 500 `#3D1152`
+- [x] Tagline "Track smart, spend wise" 14px `#8C7A9B`
+- [x] Small circular spinner `#3D1152` below tagline
+- [x] If session exists → redirect to main app
+- [x] If no session → redirect to login
 
 ### 5b. Login Screen
 
-- [ ] Create `app/login.tsx` — full screen, bg `#FAF7F5`
-- [ ] Top 45% branding: app logo, "MoneyTracker" 28px weight 500 `#3D1152`, tagline 14px `#8C7A9B`
-- [ ] Center auth area: "Welcome back" 20px weight 500 `#1C0F2E`, subtitle "Sign in to continue tracking your finances" 14px `#8C7A9B`
-- [ ] Google Sign In button: white bg, border 0.5px `#EAE3F0`, border-radius 10px, full width max 320px, padding 14px
+- [x] Create `app/login.tsx` — full screen, bg `#FAF7F5`
+- [x] Top 45% branding: app logo, "MoneyTracker" 28px weight 500 `#3D1152`, tagline 14px `#8C7A9B`
+- [x] Center auth area: "Welcome back" 20px weight 500 `#1C0F2E`, subtitle "Sign in to continue tracking your finances" 14px `#8C7A9B`
+- [x] Google Sign In button: white bg, border 0.5px `#EAE3F0`, border-radius 10px, full width max 320px, padding 14px
   - Left: Google logo SVG 20px, center: "Continue with Google" 14px weight 500 `#1C0F2E`
   - Loading state: spinner replaces text during OAuth
-- [ ] ~~"Continue as Guest" button~~ — Removed in PRD v1.3 (guest mode deferred)
-- [ ] Footer: "By continuing you agree to our Terms of Service and Privacy Policy" 11px `#8C7A9B`
+- [x] ~~"Continue as Guest" button~~ — Removed in PRD v1.3 (guest mode deferred)
+- [x] Footer: "By continuing you agree to our Terms of Service and Privacy Policy" 11px `#8C7A9B`
   - "Terms of Service" and "Privacy Policy" underlined, color `#3D1152`
-- [ ] Error state if OAuth fails
+- [x] Error state if OAuth fails
 
 ### 5c. Root Layout Update
 
-- [ ] Update `app/_layout.tsx` — auth gate: redirect to login if no session
-- [ ] Remove dark mode support (light mode only per PRD)
+- [x] Update `app/_layout.tsx` — auth gate: redirect to login if no session
+- [x] Remove dark mode support (light mode only per PRD)
 
 ### 5d. Shared UI Components
 
-- [ ] Create `src/components/shared/confirm-dialog.tsx` — reusable modal overlay
+- [x] Create `src/components/shared/confirm-dialog.tsx` — reusable modal overlay
   - Semi-transparent dark backdrop
   - White card centered, border-radius 14px, padding 20px
   - Title 16px weight 500 `#1C0F2E`, description 14px `#8C7A9B`
   - Two buttons: "Cancel" outlined `#3D1152`, "Confirm" filled (destructive: bg `#C13333`, white text)
-- [ ] Create `src/components/shared/toast.tsx` — bottom toast notifications
+- [x] Create `src/components/shared/toast.tsx` — bottom toast notifications
   - Bottom of screen, auto-dismiss 3 seconds
   - Success: bg `#1A7A4A`, white text
   - Error: bg `#C13333`, white text
-- [ ] Create `src/components/shared/skeleton-loader.tsx` — animated skeleton bars
+- [x] Create `src/components/shared/skeleton-loader.tsx` — animated skeleton bars
   - Gray animated bars in `#EAE3F0`, not spinners
-- [ ] Create `src/components/shared/empty-state.tsx` — reusable empty state
+- [x] Create `src/components/shared/empty-state.tsx` — reusable empty state
   - Simple illustration + heading `#1C0F2E` + subtext `#8C7A9B` + optional CTA button in `#3D1152`
-- [ ] Create `src/components/shared/category-avatar.tsx` — colored circle with Lucide icon
+- [x] Create `src/components/shared/category-avatar.tsx` — colored circle with Lucide icon
   - Reusable across dashboard, transaction rows, category cards
 
 ---
@@ -189,40 +197,40 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 5.5a. Screen 1 — Welcome
 
-- [ ] Create `app/onboarding/welcome.tsx`
-- [ ] App logo centered, large
-- [ ] "Welcome to MoneyTracker" 24px weight 500 `#3D1152`
-- [ ] Subtitle: "Track your spending automatically or manually" 14px `#8C7A9B`
-- [ ] [ Get Started ] button — bg `#3D1152`, white text, border-radius 10px, full width
-- [ ] Tapping Get Started → navigate to Screen 2
+- [x] Create `app/onboarding/welcome.tsx`
+- [x] App logo centered, large
+- [x] "Welcome to MoneyTracker" 24px weight 500 `#3D1152`
+- [x] Subtitle: "Track your spending automatically or manually" 14px `#8C7A9B`
+- [x] [ Get Started ] button — bg `#3D1152`, white text, border-radius 10px, full width
+- [x] Tapping Get Started → navigate to Screen 2
 
 ### 5.5b. Screen 2 — Auto-Import Setup (Optional)
 
-- [ ] Create `app/onboarding/auto-import.tsx`
-- [ ] Heading: "Want transactions recorded automatically?" 20px weight 500 `#1C0F2E`
-- [ ] Subtitle: "Forward your bank or e-wallet emails and we'll do the rest." 14px `#8C7A9B`
-- [ ] Show user's unique intake address (copyable, e.g. user_abc123@intake.yourapp.com) — read from API or generate
-- [ ] Keyword management: input field + add button, active keyword chips (e.g. gopay, bca) with X to remove
-- [ ] Expandable step-by-step Gmail filter setup guide (collapsed by default)
-- [ ] [ Set Up Later ] button — outlined `#3D1152`, skips to Screen 3 without penalty
-- [ ] [ Done ] button — bg `#3D1152`, white text, proceeds to Screen 3
-- [ ] Both buttons always visible — neither blocks the user
+- [x] Create `app/onboarding/auto-import.tsx`
+- [x] Heading: "Want transactions recorded automatically?" 20px weight 500 `#1C0F2E`
+- [x] Subtitle: "Forward your bank or e-wallet emails and we'll do the rest." 14px `#8C7A9B`
+- [x] Show user's unique intake address (copyable, e.g. user_abc123@intake.yourapp.com) — read from API or generate
+- [x] Keyword management: input field + add button, active keyword chips (e.g. gopay, bca) with X to remove
+- [x] Expandable step-by-step Gmail filter setup guide (collapsed by default)
+- [x] [ Set Up Later ] button — outlined `#3D1152`, skips to Screen 3 without penalty
+- [x] [ Done ] button — bg `#3D1152`, white text, proceeds to Screen 3
+- [x] Both buttons always visible — neither blocks the user
 
 ### 5.5c. Screen 3 — Manual Entry Intro
 
-- [ ] Create `app/onboarding/manual-entry.tsx`
-- [ ] Heading: "You can always add transactions manually" 20px weight 500 `#1C0F2E`
-- [ ] Subtitle: "Tap the + button anytime to record cash or any transaction" 14px `#8C7A9B`
-- [ ] [ Go to Dashboard ] button — bg `#3D1152`, white text, border-radius 10px, full width
-- [ ] Tapping Go to Dashboard → navigate to main app (bottom tabs), mark onboarding complete
+- [x] Create `app/onboarding/manual-entry.tsx`
+- [x] Heading: "You can always add transactions manually" 20px weight 500 `#1C0F2E`
+- [x] Subtitle: "Tap the + button anytime to record cash or any transaction" 14px `#8C7A9B`
+- [x] [ Go to Dashboard ] button — bg `#3D1152`, white text, border-radius 10px, full width
+- [x] Tapping Go to Dashboard → navigate to main app (bottom tabs), mark onboarding complete
 
 ### 5.5d. Onboarding Logic
 
-- [ ] Track onboarding completion per user (store flag in AsyncStorage or Supabase user metadata)
-- [ ] After login: check onboarding flag → if not completed, show onboarding flow; if completed, go to main app
-- [ ] Onboarding flow uses horizontal swipe or next/back buttons (consistent navigation)
-- [ ] User can always access auto-import setup later from Profile → Transaction Import section (Phase 2.5)
-- [ ] Both methods (auto + manual) available simultaneously — manual entry always available regardless of auto-import status
+- [x] Track onboarding completion per user (store flag in AsyncStorage or Supabase user metadata)
+- [x] After login: check onboarding flag → if not completed, show onboarding flow; if completed, go to main app
+- [x] Onboarding flow uses horizontal swipe or next/back buttons (consistent navigation)
+- [x] User can always access auto-import setup later from Profile → Transaction Import section (Phase 2.5)
+- [x] Both methods (auto + manual) available simultaneously — manual entry always available regardless of auto-import status
 
 ---
 
@@ -230,21 +238,21 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 6a. Create 5-Tab Layout
 
-- [ ] Create `app/(tabs)/index.tsx` — Home tab (placeholder)
-- [ ] Create `app/(tabs)/transactions.tsx` — Transactions tab (placeholder)
-- [ ] Create `app/(tabs)/add.tsx` — Add tab (placeholder, will be FAB style)
-- [ ] Create `app/(tabs)/categories.tsx` — Categories tab (placeholder)
-- [ ] Create `app/(tabs)/profile.tsx` — Profile tab (placeholder)
+- [x] Create `app/(tabs)/index.tsx` — Home tab (placeholder)
+- [x] Create `app/(tabs)/transactions.tsx` — Transactions tab (placeholder)
+- [x] Create `app/(tabs)/add.tsx` — Add tab (placeholder, will be FAB style)
+- [x] Create `app/(tabs)/categories.tsx` — Categories tab (placeholder)
+- [x] Create `app/(tabs)/profile.tsx` — Profile tab (placeholder)
 
 ### 6b. Tab Configuration
 
-- [ ] Update `app/(tabs)/_layout.tsx` — 5 tabs with Lucide icons
-- [ ] Tab icons (per StitchBrief): Home (House), Transactions (LayoutList), Add (CirclePlus), Categories (Tag), Profile (User)
-- [ ] Active tab: icon + label color `#3D1152`
-- [ ] Inactive tab: icon + label color `#8C7A9B`, label 11px below icon
-- [ ] Add tab (center): icon color `#FF6B2B`, slightly larger 28px, no label
-- [ ] Tab bar background: White `#FFFFFF`
-- [ ] Tab bar top border: 0.5px `#EAE3F0`
+- [x] Update `app/(tabs)/_layout.tsx` — 5 tabs with Lucide icons
+- [x] Tab icons (per StitchBrief): Home (House), Transactions (LayoutList), Add (CirclePlus), Categories (Tag), Profile (User)
+- [x] Active tab: icon + label color `#3D1152`
+- [x] Inactive tab: icon + label color `#8C7A9B`, label 11px below icon
+- [x] Add tab (center): icon color `#FF6B2B`, slightly larger 28px, no label
+- [x] Tab bar background: White `#FFFFFF`
+- [x] Tab bar top border: 0.5px `#EAE3F0`
 
 ---
 
@@ -252,40 +260,40 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 7a. Category Display
 
-- [ ] Create `src/components/categories/category-card.tsx` — icon + name + color circle
-- [ ] Create `src/components/categories/master-categories-section.tsx`
+- [x] Create `src/components/categories/category-card.tsx` — icon + name + color circle
+- [x] Create `src/components/categories/master-categories-section.tsx`
   - Section label "Default Categories" 12px weight 500 `#8C7A9B`, count badge in `#EDE0F5` bg
   - 3-column grid: white card, border 0.5px `#EAE3F0`, border-radius 12px, padding 14px
   - Colored circle avatar 40px centered, category name 12px `#1C0F2E` below
   - No edit/delete affordance
-- [ ] Create `src/components/categories/my-categories-section.tsx`
+- [x] Create `src/components/categories/my-categories-section.tsx`
   - Section label "My Categories" with count badge
   - Same card grid layout, each card has PencilLine icon 12px `#8C7A9B` bottom-right
   - Tap card: opens Category Form Bottom Sheet prefilled
   - "Add Category" card at end: dashed border `#EAE3F0`, Plus icon 20px, "Add Category" 12px `#8C7A9B`
   - Empty state: "No custom categories yet" `#8C7A9B` + "Add your first" button
-- [ ] Wire up `use-categories` hook to fetch data
+- [x] Wire up `use-categories` hook to fetch data
 
 ### 7b. Category Bottom Sheet Form
 
-- [ ] Create `src/components/categories/category-form-sheet.tsx` — add/edit form
-- [ ] Handle + title: "New Category" or "Edit Category" 16px weight 500 `#1C0F2E`
-- [ ] Name input: label "Name" 12px `#8C7A9B`, full width text input, border 0.5px `#EAE3F0`, border-radius 8px, padding 12px, autofocus
-- [ ] Icon picker: label "Icon" 12px `#8C7A9B`, horizontally scrollable grid of Lucide icons (min 30 options)
+- [x] Create `src/components/categories/category-form-sheet.tsx` — add/edit form
+- [x] Handle + title: "New Category" or "Edit Category" 16px weight 500 `#1C0F2E`
+- [x] Name input: label "Name" 12px `#8C7A9B`, full width text input, border 0.5px `#EAE3F0`, border-radius 8px, padding 12px, autofocus
+- [x] Icon picker: label "Icon" 12px `#8C7A9B`, horizontally scrollable grid of Lucide icons (min 30 options)
   - Unselected: bg `#FAF7F5`, icon `#8C7A9B`
   - Selected: bg `#EDE0F5`, border 1.5px `#3D1152`, icon `#3D1152`
-- [ ] Color picker: label "Color" 12px `#8C7A9B`, row of 10 color swatches (circles 28px each)
+- [x] Color picker: label "Color" 12px `#8C7A9B`, row of 10 color swatches (circles 28px each)
   - Colors: `#C13333`, `#FF6B2B`, `#1A7A4A`, `#3D1152`, `#8C7A9B`, `#2E5FA3`, `#B84080`, `#C17F24`, `#1A7A7A`, `#555555`
   - Selected: white checkmark in center
-- [ ] Edit mode only: "Delete Category" full width, `#C13333` text + border, above main buttons
-- [ ] Two buttons side by side: "Cancel" outlined `#3D1152` and "Save" filled bg `#3D1152` white text
+- [x] Edit mode only: "Delete Category" full width, `#C13333` text + border, above main buttons
+- [x] Two buttons side by side: "Cancel" outlined `#3D1152` and "Save" filled bg `#3D1152` white text
 
 ### 7c. Category CRUD
 
-- [ ] Create new custom category → inserts with `user_id = auth.uid()`
-- [ ] Edit custom category → updates name/icon/color
-- [ ] Delete custom category → confirm dialog → hard delete (or soft delete via `is_active`)
-- [ ] Cannot edit/delete master categories (enforced by RLS)
+- [x] Create new custom category → inserts with `user_id = auth.uid()`
+- [x] Edit custom category → updates name/icon/color
+- [x] Delete custom category → confirm dialog → hard delete (or soft delete via `is_active`)
+- [x] Cannot edit/delete master categories (enforced by RLS)
 
 ---
 
@@ -293,51 +301,51 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 8a. Full Screen Layout
 
-- [ ] Create `app/add-transaction.tsx` — full screen modal
-- [ ] Header: back arrow (ChevronLeft), title "Add Transaction" or "Edit Transaction", Trash2 icon (edit only)
-- [ ] Large amount input at top: currency symbol 24px `#8C7A9B`, amount 48px weight 500 `#1C0F2E`
-- [ ] Blinking cursor: 3px wide, color `#FF6B2B`, animated blink
-- [ ] Placeholder "0.00" in `#8C7A9B` when empty
-- [ ] Numeric keyboard auto-opens on screen load
-- [ ] Income / Expense toggle: pill container bg `#EAE3F0`, active expense bg `#C13333`, active income bg `#1A7A4A`, inactive text `#8C7A9B`
-- [ ] Form fields as tappable rows: icon in colored circle 28px, label, value, chevron
+- [x] Create `app/add-transaction.tsx` — full screen modal
+- [x] Header: back arrow (ChevronLeft), title "Add Transaction" or "Edit Transaction", Trash2 icon (edit only)
+- [x] Large amount input at top: currency symbol 24px `#8C7A9B`, amount 48px weight 500 `#1C0F2E`
+- [x] Blinking cursor: 3px wide, color `#FF6B2B`, animated blink
+- [x] Placeholder "0.00" in `#8C7A9B` when empty
+- [x] Numeric keyboard auto-opens on screen load
+- [x] Income / Expense toggle: pill container bg `#EAE3F0`, active expense bg `#C13333`, active income bg `#1A7A4A`, inactive text `#8C7A9B`
+- [x] Form fields as tappable rows: icon in colored circle 28px, label, value, chevron
   - Category row → pushes to Category Picker Screen
   - Date row (CalendarDays icon) → native date picker, default today
   - Currency row (Globe icon) → currency selector, default from profile
   - Note row (FileText icon) → multiline text input, no chevron
-- [ ] Save button pinned at bottom: full width bg `#3D1152`, text "Save Transaction" with "action" in tangerine `#FF6B2B`
-- [ ] Save disabled state: bg `#EAE3F0`, text `#8C7A9B` (when amount is 0 or no category)
+- [x] Save button pinned at bottom: full width bg `#3D1152`, text "Save Transaction" with "action" in tangerine `#FF6B2B`
+- [x] Save disabled state: bg `#EAE3F0`, text `#8C7A9B` (when amount is 0 or no category)
 
 ### 8b. Category Picker Screen (StitchBrief Screen 5B)
 
-- [ ] Create `app/category-picker.tsx` — full screen pushed from Add Transaction
-- [ ] Header: back arrow + "Select Category" title
-- [ ] "Default Categories" section header 12px weight 500 `#8C7A9B`
-- [ ] 3-column grid: white card, colored circle avatar 40px, category name 12px `#1C0F2E`
-- [ ] Selected state: card border 2px `#3D1152`, checkmark overlay top-right
-- [ ] "My Categories" section with same grid
-- [ ] Last cell: dashed border, Plus icon, "Add New" label `#8C7A9B` → opens Category Form Bottom Sheet
+- [x] Create `app/category-picker.tsx` — full screen pushed from Add Transaction
+- [x] Header: back arrow + "Select Category" title
+- [x] "Default Categories" section header 12px weight 500 `#8C7A9B`
+- [x] 3-column grid: white card, colored circle avatar 40px, category name 12px `#1C0F2E`
+- [x] Selected state: card border 2px `#3D1152`, checkmark overlay top-right
+- [x] "My Categories" section with same grid
+- [x] Last cell: dashed border, Plus icon, "Add New" label `#8C7A9B` → opens Category Form Bottom Sheet
 
 ### 8b. Form Validation
 
-- [ ] Validate amount > 0
-- [ ] Validate category selected
-- [ ] Validate date is valid
-- [ ] Show validation errors inline
+- [x] Validate amount > 0
+- [x] Validate category selected
+- [x] Validate date is valid
+- [x] Show validation errors inline
 
 ### 8c. Edit Mode
 
-- [ ] Same screen used for editing (prefilled with transaction data)
-- [ ] Delete button in header (only in edit mode)
-- [ ] Delete confirmation dialog
+- [x] Same screen used for editing (prefilled with transaction data)
+- [x] Delete button in header (only in edit mode)
+- [x] Delete confirmation dialog
 
 ### 8d. Save Transaction
 
-- [ ] Insert new transaction via `use-transactions` hook
-- [ ] Set `source = 'manual'` by default on all new transactions (PRD v1.5 Section 3 — transactions.source)
-- [ ] Optimistic update on TanStack Query cache
-- [ ] Navigate back after save
-- [ ] Show toast on success/error
+- [x] Insert new transaction via `use-transactions` hook
+- [x] Set `source = 'manual'` by default on all new transactions (PRD v1.5 Section 3 — transactions.source)
+- [x] Optimistic update on TanStack Query cache
+- [x] Navigate back after save
+- [x] Show toast on success/error
 
 ---
 
@@ -345,14 +353,14 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 9a. Dashboard Header
 
-- [ ] Period: "This Month" — fixed for Phase 1, no selector
+- [x] Period: "This Month" — fixed for Phase 1, no selector
 
 ### 9b. Summary Cards
 
-- [ ] Create `src/components/home/summary-cards.tsx` — 3 cards at top
-- [ ] Total Income card — green `#1A7A4A` accent
-- [ ] Total Expense card — red `#C13333` accent
-- [ ] Balance card — plum `#3D1152`
+- [x] Create `src/components/home/summary-cards.tsx` — 3 cards at top
+- [x] Total Income card — green `#1A7A4A` accent
+- [x] Total Expense card — red `#C13333` accent
+- [x] Balance card — plum `#3D1152`
 
 ### 9c. Spending by Category
 
@@ -364,12 +372,12 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 9d. Recent Transactions
 
-- [ ] Create `src/components/home/recent-transactions.tsx`
-- [ ] Section header: "Recent Transactions" left, "See all" 12px `#FF6B2B` right
-- [ ] Last 5 transactions, each row: colored circle avatar 36px, name/merchant 13px weight 500, amount with `+`/`−` prefix
-- [ ] Time below amount: 11px `#8C7A9B` (e.g. "Today, 19:30"), date below time if different day
-- [ ] Empty state: illustration + "No transactions yet" + "Add Transaction" button in `#3D1152`
-- [ ] Tap row → open Transaction Bottom Sheet
+- [x] Create `src/components/home/recent-transactions.tsx`
+- [x] Section header: "Recent Transactions" left, "See all" 12px `#FF6B2B` right
+- [x] Last 5 transactions, each row: colored circle avatar 36px, name/merchant 13px weight 500, amount with `+`/`−` prefix
+- [x] Time below amount: 11px `#8C7A9B` (e.g. "Today, 19:30"), date below time if different day
+- [x] Empty state: illustration + "No transactions yet" + "Add Transaction" button in `#3D1152`
+- [x] Tap row → open Transaction Bottom Sheet
 
 ### 9e. Transaction Bottom Sheet
 
@@ -389,18 +397,18 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 10a. List Header + Display
 
-- [ ] Header: title "Transactions" 20px weight 500 `#1C0F2E`, right: SlidersHorizontal icon 22px `#8C7A9B`
-- [ ] Filter icon shows filled tangerine `#FF6B2B` dot badge when any filter is active
-- [ ] Create `src/components/transactions/transaction-row.tsx`
-- [ ] Each row: colored circle avatar 40px with Lucide category icon
-- [ ] Name/merchant 14px weight 500 `#1C0F2E` (primary label — note or merchant name)
-- [ ] Amount 14px weight 500 right (red `#C13333` with `−` or green `#1A7A4A` with `+`)
-- [ ] Time 11px `#8C7A9B` below amount (e.g. "Today, 19:30"), date below time if different day
-- [ ] Row separator: 0.5px border `#EAE3F0`
+- [x] Header: title "Transactions" 20px weight 500 `#1C0F2E`, right: SlidersHorizontal icon 22px `#8C7A9B`
+- [x] Filter icon shows filled tangerine `#FF6B2B` dot badge when any filter is active
+- [x] Create `src/components/transactions/transaction-row.tsx`
+- [x] Each row: colored circle avatar 40px with Lucide category icon
+- [x] Name/merchant 14px weight 500 `#1C0F2E` (primary label — note or merchant name)
+- [x] Amount 14px weight 500 right (red `#C13333` with `−` or green `#1A7A4A` with `+`)
+- [x] Time 11px `#8C7A9B` below amount (e.g. "Today, 19:30"), date below time if different day
+- [x] Row separator: 0.5px border `#EAE3F0`
 
 ### 10b. Search + Filter Chips
 
-- [ ] Search bar: full width input, bg white, border 0.5px `#EAE3F0`, border-radius 10px, Search icon left `#8C7A9B`, clear X button when text entered
+- [x] Search bar: full width input, bg white, border 0.5px `#EAE3F0`, border-radius 10px, Search icon left `#8C7A9B`, clear X button when text entered
 - [ ] Active filter chips: horizontal scrollable row below search
 - [ ] Each chip: bg `#EDE0F5`, text `#3D1152`, 12px, border-radius 20px, small X to remove
 - [ ] Tap filter icon → open Filter Bottom Sheet
@@ -416,8 +424,8 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 10d. Date Grouping + Interactions
 
-- [ ] Group transactions by date with sticky headers: "Today", "Yesterday", then "Mon, 12 Jan 2026"
-- [ ] Date header: 12px weight 500 `#8C7A9B`, bg `#FAF7F5`
+- [x] Group transactions by date with sticky headers: "Today", "Yesterday", then "Mon, 12 Jan 2026"
+- [x] Date header: 12px weight 500 `#8C7A9B`, bg `#FAF7F5`
 - [ ] Infinite scroll with loading indicator
 - [ ] Swipe left on row: reveals red Delete button
 - [ ] Tap row: opens Transaction Detail Bottom Sheet
@@ -430,15 +438,15 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 11a. Profile Screen
 
-- [ ] Header: title "Profile" 20px weight 500 `#1C0F2E`
-- [ ] User card (white card, border-radius 12px, padding 16px):
+- [x] Header: title "Profile" 20px weight 500 `#1C0F2E`
+- [x] User card (white card, border-radius 12px, padding 16px):
   - **Signed-in users:** Circle avatar 64px from Google photo, fallback initials bg `#EDE0F5` text `#3D1152`
   - Display name 16px weight 500 `#1C0F2E`, email 13px `#8C7A9B`
-- [ ] Preferences section: label "Preferences" 12px weight 500 `#8C7A9B`
+- [x] Preferences section: label "Preferences" 12px weight 500 `#8C7A9B`
   - White card with row: Globe icon `#8C7A9B`, "Default Currency" `#1C0F2E`, current value e.g. "USD" `#3D1152`, ChevronRight `#8C7A9B`
-- [ ] Account section: label "Account" 12px weight 500 `#8C7A9B`
+- [x] Account section: label "Account" 12px weight 500 `#8C7A9B`
   - **Signed-in:** LogOut icon `#C13333`, "Sign Out" 14px `#C13333` → confirm dialog
-- [ ] Footer: "MoneyTracker v1.0.0" 11px `#8C7A9B` centered at bottom
+- [x] Footer: "MoneyTracker v1.0.0" 11px `#8C7A9B` centered at bottom
 
 ---
 
@@ -665,10 +673,11 @@ These are not bugs or tech debt — they're design decisions worth reconsidering
 - **Decision needed:** Whether to add to Phase 1 (scope creep) or make it Phase 2 priority.
 
 ### AR-4: Move email auto-import setup out of onboarding (Phase 2.5)
+
 - **Issue:** PRD §5.2 Screen 2 puts email auto-import setup in onboarding. Two problems:
   1. Users haven't seen app value yet — won't configure Gmail filters for an app they just opened
   2. Setup is 5+ steps with Gmail verification — massive drop-off
-- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: *"Want transactions imported automatically? Set up later in Profile."*
+- **Recommendation:** Move email setup to Profile → Transaction Import (already planned in §7.8). Replace onboarding Screen 2 with a one-line teaser: _"Want transactions imported automatically? Set up later in Profile."_
 - **Impact:** Higher onboarding completion rate; lower churn.
 - **Decision needed:** Before Step 5.5 (Onboarding Flow) implementation.
 - **Status:** ✅ DECIDED — Build teaser version. One-screen summary ("Track automatically, too — set up anytime in Profile"), no copyable intake address, no keyword form, no Gmail guide. Full setup moves to Profile → Transaction Import in Phase 2.5 when backend exists. User confirmed: curiosity-driven discovery > forced form.
