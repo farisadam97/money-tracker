@@ -1,8 +1,15 @@
 import { useRouter } from "expo-router";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react-native";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  LayoutChangeEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { SpendingByCategory } from "@/src/components/home/spending-by-category";
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
 import { resolveIcon } from "@/src/constants/icon-map";
@@ -10,6 +17,7 @@ import { useAuth } from "@/src/hooks/use-auth";
 import { useCategoriesQuery } from "@/src/hooks/use-categories";
 import { useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
 import type { TransactionRow } from "@/src/types/database";
+import { useState } from "react";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -17,6 +25,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { data: transactions, isLoading } = useRecentTransactionsQuery(10);
   const { data: categories } = useCategoriesQuery();
+  const [sectionsHeight, setSectionsHeight] = useState(0);
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] ?? "there";
 
@@ -42,11 +51,7 @@ export default function HomeScreen() {
     categories?.find((c) => c.id === catId)?.name ?? "Other";
 
   return (
-    <ScrollView
-      style={[styles.container, { paddingTop: insets.top + 12 }]}
-      contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       {/* Greeting */}
       <View style={styles.greetingRow}>
         <View>
@@ -134,39 +139,71 @@ export default function HomeScreen() {
         ) : null}
       </View>
 
-      {/* Recent transactions header */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
-        <Text
-          style={styles.seeAll}
-          onPress={() => router.push("/(tabs)/transactions" as never)}
+      {/* Sections — each pane scrolls independently, balance card stays fixed.
+          We measure the available height via onLayout and assign explicit
+          pixel heights so the nested ScrollViews resolve reliably. */}
+      <View
+        style={styles.sectionsContainer}
+        onLayout={(e: LayoutChangeEvent) => {
+          const h = e.nativeEvent.layout.height;
+          if (h > 0 && h !== sectionsHeight) setSectionsHeight(h);
+        }}
+      >
+        {/* Spending by category */}
+        <View
+          style={[
+            styles.sectionPane,
+            sectionsHeight > 0 && { height: (sectionsHeight - 12) / 2 },
+          ]}
         >
-          See All
-        </Text>
-      </View>
+          <SpendingByCategory />
+        </View>
 
-      {/* Recent transactions list */}
-      <View style={styles.transactionsList}>
-        {monthTransactions.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No transactions yet</Text>
-            <Text style={styles.emptyText}>
-              Tap the + button to add your first transaction
+        {/* Recent transactions */}
+        <View
+          style={[
+            styles.sectionPane,
+            sectionsHeight > 0 && { height: (sectionsHeight - 12) / 2 },
+          ]}
+        >
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Transactions</Text>
+            <Text
+              style={styles.seeAll}
+              onPress={() => router.push("/(tabs)/transactions" as never)}
+            >
+              See All
             </Text>
           </View>
-        ) : (
-          monthTransactions
-            .slice(0, 5)
-            .map((txn) => (
-              <TransactionRow
-                key={txn.id}
-                transaction={txn}
-                categoryName={categoryName(txn.category_id)}
-              />
-            ))
-        )}
+
+          <ScrollView
+            style={styles.listScroll}
+            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+          >
+            {monthTransactions.length === 0 ? (
+              <View style={styles.listEmptyState}>
+                <Text style={styles.emptyTitle}>No transactions yet</Text>
+                <Text style={styles.emptyText}>
+                  Tap the + button to add your first transaction
+                </Text>
+              </View>
+            ) : (
+              monthTransactions
+                .slice(0, 5)
+                .map((txn) => (
+                  <TransactionRow
+                    key={txn.id}
+                    transaction={txn}
+                    categoryName={categoryName(txn.category_id)}
+                  />
+                ))
+            )}
+          </ScrollView>
+        </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -246,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.plum,
     borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   balanceHeaderRow: {
     flexDirection: "row",
@@ -342,8 +379,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  transactionsList: {
-    gap: 4,
+  sectionsContainer: {
+    flex: 1,
+    minHeight: 0,
+    gap: 12,
+  },
+  sectionPane: {
+    flex: 1,
+    minHeight: 0,
+  },
+  listScroll: {
+    flex: 1,
+    minHeight: 0,
   },
   txnRow: {
     flexDirection: "row",
@@ -382,8 +429,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  emptyState: {
+  listEmptyState: {
+    flex: 1,
+    minHeight: 0,
     alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 32,
   },
   emptyTitle: {

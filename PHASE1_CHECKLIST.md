@@ -364,11 +364,11 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 9c. Spending by Category
 
-- [ ] Create `src/components/home/spending-by-category.tsx`
-- [ ] Section header: "Spending by Category" left, "See all" 12px `#FF6B2B` right
-- [ ] Up to 5 category rows: colored circle avatar 32px, category name 13px `#1C0F2E`, amount 13px weight 500 right-aligned
-- [ ] Thin progress bar: track bg `#EAE3F0`, fill = category icon color, height 3px, border-radius 2px
-- [ ] Empty state: "No expenses this month" centered `#8C7A9B`
+- [x] Create `src/components/home/spending-by-category.tsx`
+- [x] Section header: "Spending by Category" left, "See all" 12px `#FF6B2B` right
+- [x] Up to 5 category rows: colored circle avatar 32px, category name 13px `#1C0F2E`, amount 13px weight 500 right-aligned
+- [x] Thin progress bar: track bg `#EAE3F0`, fill = category icon color, height 3px, border-radius 2px
+- [x] Empty state: "No expenses this month" centered `#8C7A9B`
 
 ### 9d. Recent Transactions
 
