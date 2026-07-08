@@ -96,3 +96,28 @@ export type TransactionUpdate = Database["public"]["Tables"]["transactions"]["Up
 
 export type TransactionType = "income" | "expense";
 export type TransactionSource = "manual" | "split_bill" | "email";
+
+/**
+ * Filter tabs for the Transactions list. Extends TransactionType with an
+ * "all" option. Defined as an enum so the values can be iterated without
+ * inline string arrays.
+ */
+export enum FilterTab {
+  All = "all",
+  Income = "income",
+  Expense = "expense",
+}
+
+/** Ordered list of all filter tabs for iteration in the UI. */
+export const FILTER_TABS: readonly FilterTab[] = [
+  FilterTab.All,
+  FilterTab.Income,
+  FilterTab.Expense,
+];
+
+/** Human-readable label for each filter tab. */
+export const FILTER_TAB_LABELS: Record<FilterTab, string> = {
+  [FilterTab.All]: "All",
+  [FilterTab.Income]: "Income",
+  [FilterTab.Expense]: "Expenses",
+};
