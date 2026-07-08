@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Inbox, Search } from "lucide-react-native";
+import { Inbox, Search, SlidersHorizontal, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import {
   ScrollView,
@@ -11,30 +11,88 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { FilterSheet } from "@/src/components/transactions/filter-sheet";
+import { TransactionDetailSheet } from "@/src/components/transactions/transaction-detail-sheet";
+import { Toast } from "@/src/components/shared/toast";
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
 import { resolveIcon } from "@/src/constants/icon-map";
 import { useCategoriesQuery } from "@/src/hooks/use-categories";
-import { useTransactionsQuery } from "@/src/hooks/use-transactions";
-import type { TransactionRow, TransactionType } from "@/src/types/database";
-
-type FilterTab = "all" | TransactionType;
+import {
+  useDeleteTransaction,
+  useTransactionsQuery,
+} from "@/src/hooks/use-transactions";
+import { useFilterStore } from "@/src/stores/filter-store";
+import {
+  type CategoryRow,
+  type TransactionRow,
+  FILTER_TABS,
+  FILTER_TAB_LABELS,
+  FilterTab,
+} from "@/src/types/database";
 
 export default function TransactionsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<FilterTab>("all");
+
+  // Filter state — from shared Zustand store (syncs with FilterSheet + chips)
+  const {
+    type,
+    setType,
+    categoryIds,
+    toggleCategory,
+    clearCategories,
+    dateFrom,
+    dateTo,
+    setDateRange,
+    search,
+    setSearch,
+    hasActiveFilters,
+  } = useFilterStore();
 
   const { data: transactions, isLoading } = useTransactionsQuery();
   const { data: categories } = useCategoriesQuery();
+  const deleteTransaction = useDeleteTransaction();
 
-  // Apply search + filter
+  // Filter sheet visibility
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+
+  // Toast state
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastVariant, setToastVariant] = useState<"success" | "error">("success");
+  const [toastVisible, setToastVisible] = useState(false);
+  const showToast = (message: string, variant: "success" | "error" = "success") => {
+    setToastMessage(message);
+    setToastVariant(variant);
+    setToastVisible(true);
+  };
+
+  // Currently-selected transaction for the detail bottom sheet
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedTxn = transactions?.find((t) => t.id === selectedId) ?? null;
+  const selectedCategory =
+    (categories?.find((c) => c.id === selectedTxn?.category_id) as
+      | CategoryRow
+      | undefined) ?? null;
+
+  // Apply all filters
   const filtered = useMemo(() => {
     let result = transactions ?? [];
 
-    if (filter !== "all") {
-      result = result.filter((t) => t.type === filter);
+    if (type !== "all") {
+      result = result.filter((t) => t.type === type);
+    }
+
+    if (categoryIds.length > 0) {
+      result = result.filter((t) => categoryIds.includes(t.category_id));
+    }
+
+    if (dateFrom) {
+      result = result.filter((t) => t.date >= dateFrom);
+    }
+
+    if (dateTo) {
+      result = result.filter((t) => t.date <= dateTo);
     }
 
     if (search.trim()) {
@@ -47,17 +105,47 @@ export default function TransactionsScreen() {
     }
 
     return result;
-  }, [transactions, filter, search, categories]);
+  }, [transactions, type, categoryIds, dateFrom, dateTo, search, categories]);
 
   // Group by date
   const grouped = useMemo(() => groupByDate(filtered), [filtered]);
 
   const categoryName = (catId: string) => getCatName(catId, categories);
 
+  // Build active filter chips data
+  const activeChips = useMemo(() => {
+    const chips: { label: string; onRemove: () => void }[] = [];
+    if (categoryIds.length > 0) {
+      chips.push({
+        label: `${categoryIds.length} categor${categoryIds.length > 1 ? "ies" : "y"}`,
+        onRemove: clearCategories,
+      });
+    }
+    if (dateFrom || dateTo) {
+      const fmt = (d: string) =>
+        new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      chips.push({
+        label: dateFrom && dateTo ? `${fmt(dateFrom)} – ${fmt(dateTo)}` : dateFrom ? `From ${fmt(dateFrom)}` : `Until ${fmt(dateTo!)}`,
+        onRemove: () => setDateRange(null, null),
+      });
+    }
+    return chips;
+  }, [categoryIds, dateFrom, dateTo, clearCategories, setDateRange]);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-      {/* Title */}
-      <Text style={styles.screenTitle}>Transactions</Text>
+      {/* Title + filter icon */}
+      <View style={styles.titleRow}>
+        <Text style={styles.screenTitle}>Transactions</Text>
+        <TouchableOpacity
+          onPress={() => setFilterSheetVisible(true)}
+          style={styles.filterIconButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <SlidersHorizontal size={20} color={Colors.textSecondary} strokeWidth={2} />
+          {hasActiveFilters() ? <View style={styles.filterDotBadge} /> : null}
+        </TouchableOpacity>
+      </View>
 
       {/* Search bar */}
       <View style={styles.searchContainer}>
@@ -74,27 +162,53 @@ export default function TransactionsScreen() {
           placeholderTextColor={Colors.textSecondary}
           style={styles.searchInput}
         />
+        {search.trim() ? (
+          <TouchableOpacity onPress={() => setSearch("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <X size={16} color={Colors.textSecondary} strokeWidth={2} />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
-      {/* Filter tabs */}
+      {/* Quick type tabs */}
       <View style={styles.filterContainer}>
-        {(["all", "income", "expense"] as FilterTab[]).map((tab) => (
+        {FILTER_TABS.map((tab) => (
           <TouchableOpacity
             key={tab}
-            onPress={() => setFilter(tab)}
-            style={[styles.filterTab, filter === tab && styles.filterTabActive]}
+            onPress={() => setType(tab as typeof type)}
+            style={[styles.filterTab, type === tab && styles.filterTabActive]}
           >
             <Text
               style={[
                 styles.filterTabText,
-                filter === tab && styles.filterTabTextActive,
+                type === tab && styles.filterTabTextActive,
               ]}
             >
-              {tab === "all" ? "All" : tab === "income" ? "Income" : "Expenses"}
+              {FILTER_TAB_LABELS[tab]}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* Active filter chips */}
+      {activeChips.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsScroll}
+          contentContainerStyle={styles.chipsContent}
+        >
+          {activeChips.map((chip, i) => (
+            <TouchableOpacity
+              key={i}
+              onPress={chip.onRemove}
+              style={styles.chip}
+            >
+              <Text style={styles.chipText}>{chip.label}</Text>
+              <X size={12} color={Colors.plum} strokeWidth={2.5} />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : null}
 
       {/* Transactions list */}
       <ScrollView
@@ -106,7 +220,20 @@ export default function TransactionsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {grouped.length === 0 ? (
+        {isLoading ? (
+          <View style={{ paddingHorizontal: 16 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <View key={i} style={styles.skeletonRow}>
+                <View style={styles.skeletonAvatar} />
+                <View style={{ flex: 1 }}>
+                  <View style={styles.skeletonLine} />
+                  <View style={[styles.skeletonLine, { width: "60%", marginTop: 6 }]} />
+                </View>
+                <View style={[styles.skeletonLine, { width: 60 }]} />
+              </View>
+            ))}
+          </View>
+        ) : grouped.length === 0 ? (
           <View style={styles.emptyState}>
             <Inbox size={40} color={Colors.textSecondary} strokeWidth={1.5} />
             <Text style={styles.emptyTitle}>
@@ -131,12 +258,7 @@ export default function TransactionsScreen() {
                     key={txn.id}
                     transaction={txn}
                     categoryName={categoryName(txn.category_id)}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/add-transaction",
-                        params: { id: txn.id },
-                      } as never)
-                    }
+                    onPress={() => setSelectedId(txn.id)}
                   />
                 ))}
               </View>
@@ -144,6 +266,41 @@ export default function TransactionsScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* Transaction detail bottom sheet */}
+      <TransactionDetailSheet
+        visible={selectedId !== null}
+        transaction={selectedTxn}
+        category={selectedCategory}
+        onClose={() => setSelectedId(null)}
+        onEdit={(t) => {
+          setSelectedId(null);
+          router.push({
+            pathname: "/add-transaction",
+            params: { id: t.id },
+          } as never);
+        }}
+        onDelete={(id) => {
+          deleteTransaction.mutate(id, {
+            onSuccess: () => showToast("Transaction deleted"),
+            onError: () => showToast("Failed to delete", "error"),
+          });
+        }}
+      />
+
+      {/* Filter bottom sheet */}
+      <FilterSheet
+        visible={filterSheetVisible}
+        onClose={() => setFilterSheetVisible(false)}
+      />
+
+      {/* Toast */}
+      <Toast
+        message={toastMessage}
+        variant={toastVariant}
+        visible={toastVisible}
+        onDismiss={() => setToastVisible(false)}
+      />
     </View>
   );
 }
@@ -188,7 +345,7 @@ function TransactionRowItem({
           { color: isIncome ? Colors.income : Colors.expense },
         ]}
       >
-        {isIncome ? "+" : "-"}
+        {isIncome ? "+" : "−"}
         {formatCurrency(Number(transaction.amount))}
       </Text>
     </TouchableOpacity>
@@ -267,8 +424,27 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontSize: 20,
     fontWeight: "500",
+    marginBottom: 0,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     marginBottom: 16,
+  },
+  filterIconButton: {
+    padding: 4,
+    position: "relative",
+  },
+  filterDotBadge: {
+    position: "absolute",
+    top: 2,
+    right: 2,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: Colors.tangerine,
   },
   searchContainer: {
     flexDirection: "row",
@@ -377,5 +553,49 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
     textAlign: "center",
+  },
+  skeletonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  skeletonAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.border,
+    marginRight: 12,
+  },
+  skeletonLine: {
+    height: 12,
+    backgroundColor: Colors.border,
+    borderRadius: 4,
+  },
+  chipsScroll: {
+    maxHeight: 36,
+  },
+  chipsContent: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.plumTint,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  chipText: {
+    color: Colors.plum,
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

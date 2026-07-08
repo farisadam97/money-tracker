@@ -57,8 +57,8 @@ export function CategoryFormSheet({
         <View
           style={{
             backgroundColor: Colors.surface,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            borderTopLeftRadius: 18,
+            borderTopRightRadius: 18,
             padding: 20,
             maxHeight: "85%",
           }}

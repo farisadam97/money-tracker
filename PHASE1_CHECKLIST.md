@@ -381,15 +381,15 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 9e. Transaction Bottom Sheet
 
-- [ ] Create `src/components/transactions/transaction-detail-sheet.tsx`
-- [ ] Handle + category icon circle 52px centered, colored bg, Lucide icon 24px
-- [ ] Category name 13px `#8C7A9B` centered below icon
-- [ ] Amount 32px weight 500 centered, `#C13333` expense or `#1A7A4A` income, with currency symbol and prefix
-- [ ] Type badge: Expense bg `#FCEAEA` text `#C13333` or Income bg `#E6F5EE` text `#1A7A4A`, border-radius 20px
-- [ ] Divider: full width 0.5px border `#EAE3F0`
-- [ ] Detail rows (label left `#8C7A9B`, value right weight 500 `#1C0F2E`): Date, Time, Note (or "—"), Source ("Manual entry" or "Split bill: [title]")
-- [ ] Edit button: full width outlined border `#3D1152`, PencilLine icon, navigates to Edit Transaction screen
-- [ ] Delete button: full width outlined border `#C13333`, Trash2 icon, opens confirm dialog
+- [x] Create `src/components/transactions/transaction-detail-sheet.tsx`
+- [x] Handle + category icon circle 52px centered, colored bg, Lucide icon 24px
+- [x] Category name 13px `#8C7A9B` centered below icon
+- [x] Amount 32px weight 500 centered, `#C13333` expense or `#1A7A4A` income, with currency symbol and prefix
+- [x] Type badge: Expense bg `#FCEAEA` text `#C13333` or Income bg `#E6F5EE` text `#1A7A4A`, border-radius 20px
+- [x] Divider: full width 0.5px border `#EAE3F0`
+- [x] Detail rows (label left `#8C7A9B`, value right weight 500 `#1C0F2E`): Date, Time, Note (or "—"), Source ("Manual entry" or "Split bill: [title]")
+- [x] Edit button: full width outlined border `#3D1152`, PencilLine icon, navigates to Edit Transaction screen
+- [x] Delete button: full width outlined border `#C13333`, Trash2 icon, opens confirm dialog
 
 ---
 
@@ -409,18 +409,18 @@ Shown once immediately after first successful login, before reaching the main ap
 ### 10b. Search + Filter Chips
 
 - [x] Search bar: full width input, bg white, border 0.5px `#EAE3F0`, border-radius 10px, Search icon left `#8C7A9B`, clear X button when text entered
-- [ ] Active filter chips: horizontal scrollable row below search
-- [ ] Each chip: bg `#EDE0F5`, text `#3D1152`, 12px, border-radius 20px, small X to remove
-- [ ] Tap filter icon → open Filter Bottom Sheet
+- [x] Active filter chips: horizontal scrollable row below search
+- [x] Each chip: bg `#EDE0F5`, text `#3D1152`, 12px, border-radius 20px, small X to remove
+- [x] Tap filter icon → open Filter Bottom Sheet
 
 ### 10c. Filter Bottom Sheet
 
-- [ ] Create `src/components/transactions/filter-sheet.tsx`
-- [ ] Header row: "Filter Transactions" 16px weight 500 `#1C0F2E` left, "Reset" 14px `#FF6B2B` right
-- [ ] Type filter: 3 toggle chips (All / Income / Expense), active bg `#3D1152` white text, inactive bg `#FAF7F5` border `#EAE3F0`
-- [ ] Category filter: scrollable grid of category chips (icon + name), multiselect
-- [ ] Date range: two fields side by side ("From" / "To"), CalendarDays icon left, tap opens native date picker
-- [ ] Apply button pinned bottom: bg `#3D1152`, label "Apply Filters" or "Apply (N filters)"
+- [x] Create `src/components/transactions/filter-sheet.tsx`
+- [x] Header row: "Filter Transactions" 16px weight 500 `#1C0F2E` left, "Reset" 14px `#FF6B2B` right
+- [x] Type filter: 3 toggle chips (All / Income / Expense), active bg `#3D1152` white text, inactive bg `#FAF7F5` border `#EAE3F0`
+- [x] Category filter: scrollable grid of category chips (icon + name), multiselect
+- [x] Date range: two fields side by side ("From" / "To"), CalendarDays icon left, tap opens native date picker
+- [x] Apply button pinned bottom: bg `#3D1152`, label "Apply Filters" or "Apply (N filters)"
 
 ### 10d. Date Grouping + Interactions
 
@@ -454,31 +454,31 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 12a. Navigation Refinements
 
-- [ ] Transaction Bottom Sheet: edit → Add Transaction (prefilled) → save → refresh list
-- [ ] Home recent transaction tap → Transaction Bottom Sheet
-- [ ] Dashboard "See all" links → navigate to Transactions tab / Categories tab
-- [ ] Back navigation works correctly from all screens
-- [ ] Add tab (center) navigates to Add Transaction full screen
+- [x] Transaction Bottom Sheet: edit → Add Transaction (prefilled) → save → refresh list
+- [x] Home recent transaction tap → Transaction Bottom Sheet
+- [x] Dashboard "See all" links → navigate to Transactions tab / Categories tab
+- [x] Back navigation works correctly from all screens
+- [x] Add tab (center) navigates to Add Transaction full screen
 
 ### 12b. Error Handling
 
 - [ ] Network error states (Supabase unreachable)
-- [ ] Empty states for all lists using shared `empty-state.tsx` component
-- [ ] Loading skeletons using shared `skeleton-loader.tsx` (animated bars `#EAE3F0`, not spinners)
-- [ ] Toast notifications for save/delete/error using shared `toast.tsx`
-- [ ] All confirm dialogs use shared `confirm-dialog.tsx`
+- [x] Empty states for all lists using shared `empty-state.tsx` component
+- [x] Loading skeletons using shared `skeleton-loader.tsx` (animated bars `#EAE3F0`, not spinners)
+- [x] Toast notifications for save/delete/error using shared `toast.tsx`
+- [x] All confirm dialogs use shared `confirm-dialog.tsx`
 
 ### 12c. Visual Polish
 
-- [ ] All colors match PRD Section 12 + StitchBrief design system
-- [ ] All cards: white bg, 0.5px border `#EAE3F0`, border-radius 12px, padding 16px
-- [ ] All bottom sheets: white surface, 18px top border-radius, drag handle bar
-- [ ] Income amounts: `+` prefix, green `#1A7A4A` always
-- [ ] Expense amounts: `−` prefix, red `#C13333` always
-- [ ] Balance: `#3D1152`, turns `#C13333` if negative
-- [ ] No dark mode (light only, bg always `#FAF7F5`)
-- [ ] Active tab indicator: plum `#3D1152`
-- [ ] Destructive actions (delete): `#C13333` text and border only, never filled red button
+- [x] All colors match PRD Section 12 + StitchBrief design system
+- [x] All cards: white bg, 0.5px border `#EAE3F0`, border-radius 12px, padding 16px
+- [x] All bottom sheets: white surface, 18px top border-radius, drag handle bar
+- [x] Income amounts: `+` prefix, green `#1A7A4A` always
+- [x] Expense amounts: `−` prefix, red `#C13333` always
+- [x] Balance: `#3D1152`, turns `#C13333` if negative
+- [x] No dark mode (light only, bg always `#FAF7F5`)
+- [x] Active tab indicator: plum `#3D1152`
+- [x] Destructive actions (delete): `#C13333` text and border only, never filled red button
 
 ---
 

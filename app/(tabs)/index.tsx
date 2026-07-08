@@ -5,18 +5,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SpendingByCategory } from "@/src/components/home/spending-by-category";
+import { Toast } from "@/src/components/shared/toast";
+import { TransactionDetailSheet } from "@/src/components/transactions/transaction-detail-sheet";
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
 import { resolveIcon } from "@/src/constants/icon-map";
 import { useAuth } from "@/src/hooks/use-auth";
 import { useCategoriesQuery } from "@/src/hooks/use-categories";
-import { useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
-import type { TransactionRow } from "@/src/types/database";
+import { useDeleteTransaction, useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
+import type { CategoryRow, TransactionRow } from "@/src/types/database";
 import { useState } from "react";
 
 export default function HomeScreen() {
@@ -25,7 +28,26 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { data: transactions, isLoading } = useRecentTransactionsQuery(10);
   const { data: categories } = useCategoriesQuery();
+  const deleteTransaction = useDeleteTransaction();
   const [sectionsHeight, setSectionsHeight] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Toast state
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastVariant, setToastVariant] = useState<"success" | "error">("success");
+  const [toastVisible, setToastVisible] = useState(false);
+  const showToast = (message: string, variant: "success" | "error" = "success") => {
+    setToastMessage(message);
+    setToastVariant(variant);
+    setToastVisible(true);
+  };
+
+  const selectedTxn =
+    (transactions ?? []).find((t) => t.id === selectedId) ?? null;
+  const selectedCategory =
+    (categories?.find((c) => c.id === selectedTxn?.category_id) as
+      | CategoryRow
+      | undefined) ?? null;
 
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] ?? "there";
 
@@ -71,7 +93,15 @@ export default function HomeScreen() {
             })}
           </Text>
         </View>
-        <Text style={styles.balanceAmount}>{formatCurrency(balance)}</Text>
+        <Text
+          style={[
+            styles.balanceAmount,
+            balance < 0 && { color: Colors.expense },
+          ]}
+        >
+          {balance < 0 ? "−" : ""}
+          {formatCurrency(Math.abs(balance))}
+        </Text>
 
         <View style={styles.incomeExpenseRow}>
           <View style={styles.incomeExpenseItem}>
@@ -197,12 +227,42 @@ export default function HomeScreen() {
                     key={txn.id}
                     transaction={txn}
                     categoryName={categoryName(txn.category_id)}
+                    onPress={() => setSelectedId(txn.id)}
                   />
                 ))
             )}
           </ScrollView>
         </View>
       </View>
+
+      {/* Transaction detail bottom sheet */}
+      <TransactionDetailSheet
+        visible={selectedId !== null}
+        transaction={selectedTxn}
+        category={selectedCategory}
+        onClose={() => setSelectedId(null)}
+        onEdit={(t) => {
+          setSelectedId(null);
+          router.push({
+            pathname: "/add-transaction",
+            params: { id: t.id },
+          } as never);
+        }}
+        onDelete={(id) => {
+          deleteTransaction.mutate(id, {
+            onSuccess: () => showToast("Transaction deleted"),
+            onError: () => showToast("Failed to delete", "error"),
+          });
+        }}
+      />
+
+      {/* Toast */}
+      <Toast
+        message={toastMessage}
+        variant={toastVariant}
+        visible={toastVisible}
+        onDismiss={() => setToastVisible(false)}
+      />
     </View>
   );
 }
@@ -212,16 +272,22 @@ export default function HomeScreen() {
 function TransactionRow({
   transaction,
   categoryName,
+  onPress,
 }: {
   transaction: TransactionRow;
   categoryName: string;
+  onPress?: () => void;
 }) {
   const colors = getCategoryColors(categoryName);
   const Icon = resolveIcon(categoryName === "Other" ? "Tag" : categoryName);
   const isIncome = transaction.type === "income";
 
   return (
-    <View style={styles.txnRow}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={styles.txnRow}
+      activeOpacity={0.7}
+    >
       <View style={[styles.txnAvatar, { backgroundColor: colors.bg }]}>
         <Icon size={18} color={colors.icon} strokeWidth={2} />
       </View>
@@ -242,11 +308,11 @@ function TransactionRow({
             { color: isIncome ? Colors.income : Colors.expense },
           ]}
         >
-          {isIncome ? "+" : "-"}
+          {isIncome ? "+" : "−"}
           {formatCurrency(Number(transaction.amount))}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
