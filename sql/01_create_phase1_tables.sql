@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 
   -- Transaction details
   amount NUMERIC NOT NULL CHECK (amount > 0),
-  currency TEXT NOT NULL DEFAULT 'USD' CHECK (length(currency) = 3),
+  currency TEXT NOT NULL DEFAULT 'IDR' CHECK (length(currency) = 3),
   category_id UUID NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
   type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
   note TEXT,
