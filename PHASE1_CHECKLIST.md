@@ -427,10 +427,10 @@ Shown once immediately after first successful login, before reaching the main ap
 - [x] Group transactions by date with sticky headers: "Today", "Yesterday", then "Mon, 12 Jan 2026"
 - [x] Date header: 12px weight 500 `#8C7A9B`, bg `#FAF7F5`
 - [ ] Infinite scroll with loading indicator
-- [ ] Swipe left on row: reveals red Delete button
-- [ ] Tap row: opens Transaction Detail Bottom Sheet
-- [ ] Loading: skeleton rows in `#EAE3F0`
-- [ ] Empty state: illustration + "No transactions found" + "Clear filters" button if filters active
+- [x] Swipe left on row: reveals red Delete button
+- [x] Tap row: opens Transaction Detail Bottom Sheet
+- [x] Loading: skeleton rows in `#EAE3F0`
+- [x] Empty state: illustration + "No transactions found" + "Clear filters" button if filters active
 
 ---
 

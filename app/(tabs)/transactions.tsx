@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
-import { Inbox, Search, SlidersHorizontal, X } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { Inbox, Search, SlidersHorizontal, Trash2, X } from "lucide-react-native";
+import { useMemo, useRef, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Swipeable, type SwipeableRef } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FilterSheet } from "@/src/components/transactions/filter-sheet";
@@ -40,13 +42,13 @@ export default function TransactionsScreen() {
     type,
     setType,
     categoryIds,
-    toggleCategory,
     clearCategories,
     dateFrom,
     dateTo,
     setDateRange,
     search,
     setSearch,
+    reset: resetFilters,
     hasActiveFilters,
   } = useFilterStore();
 
@@ -237,13 +239,21 @@ export default function TransactionsScreen() {
           <View style={styles.emptyState}>
             <Inbox size={40} color={Colors.textSecondary} strokeWidth={1.5} />
             <Text style={styles.emptyTitle}>
-              {search.trim() ? "No results found" : "No transactions yet"}
+              {hasActiveFilters() ? "No transactions found" : "No transactions yet"}
             </Text>
             <Text style={styles.emptyText}>
-              {search.trim()
-                ? "Try a different search"
+              {hasActiveFilters()
+                ? "Try adjusting your filters"
                 : "Tap + to add your first transaction"}
             </Text>
+            {hasActiveFilters() ? (
+              <TouchableOpacity
+                onPress={resetFilters}
+                style={styles.clearFiltersButton}
+              >
+                <Text style={styles.clearFiltersText}>Clear Filters</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ) : (
           grouped.map((group) => (
@@ -259,6 +269,12 @@ export default function TransactionsScreen() {
                     transaction={txn}
                     categoryName={categoryName(txn.category_id)}
                     onPress={() => setSelectedId(txn.id)}
+                    onDelete={() => {
+                      deleteTransaction.mutate(txn.id, {
+                        onSuccess: () => showToast("Transaction deleted"),
+                        onError: () => showToast("Failed to delete", "error"),
+                      });
+                    }}
                   />
                 ))}
               </View>
@@ -311,44 +327,70 @@ function TransactionRowItem({
   transaction,
   categoryName,
   onPress,
+  onDelete,
 }: {
   transaction: TransactionRow;
   categoryName: string;
   onPress?: () => void;
+  onDelete?: () => void;
 }) {
   const colors = getCategoryColors(categoryName);
   const Icon = resolveIcon(categoryName === "Other" ? "Tag" : categoryName);
   const isIncome = transaction.type === "income";
+  const swipeRef = useRef<SwipeableRef>(null);
+
+  const renderRightActions = () => {
+    if (!onDelete) return null;
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          swipeRef.current?.close();
+          onDelete();
+        }}
+        style={styles.deleteAction}
+        activeOpacity={0.8}
+      >
+        <Trash2 size={18} color={Colors.surface} strokeWidth={2} />
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.txnRow}
-      activeOpacity={0.7}
+    <Swipeable
+      ref={swipeRef}
+      renderRightActions={renderRightActions}
+      overshootRight={false}
+      rightThreshold={40}
     >
-      <View style={[styles.txnAvatar, { backgroundColor: colors.bg }]}>
-        <Icon size={18} color={colors.icon} strokeWidth={2} />
-      </View>
-      <View style={styles.txnInfo}>
-        <Text style={styles.txnCategory} numberOfLines={1}>
-          {categoryName}
-        </Text>
-        {transaction.note ? (
-          <Text style={styles.txnNote} numberOfLines={1}>
-            {transaction.note}
-          </Text>
-        ) : null}
-      </View>
-      <Text
-        style={[
-          styles.txnAmount,
-          { color: isIncome ? Colors.income : Colors.expense },
-        ]}
+      <TouchableOpacity
+        onPress={onPress}
+        style={styles.txnRow}
+        activeOpacity={0.7}
       >
-        {isIncome ? "+" : "−"}
-        {formatCurrency(Number(transaction.amount))}
-      </Text>
-    </TouchableOpacity>
+        <View style={[styles.txnAvatar, { backgroundColor: colors.bg }]}>
+          <Icon size={18} color={colors.icon} strokeWidth={2} />
+        </View>
+        <View style={styles.txnInfo}>
+          <Text style={styles.txnCategory} numberOfLines={1}>
+            {categoryName}
+          </Text>
+          {transaction.note ? (
+            <Text style={styles.txnNote} numberOfLines={1}>
+              {transaction.note}
+            </Text>
+          ) : null}
+        </View>
+        <Text
+          style={[
+            styles.txnAmount,
+            { color: isIncome ? Colors.income : Colors.expense },
+          ]}
+        >
+          {isIncome ? "+" : "−"}
+          {formatCurrency(Number(transaction.amount))}
+        </Text>
+      </TouchableOpacity>
+    </Swipeable>
   );
 }
 
@@ -596,6 +638,26 @@ const styles = StyleSheet.create({
   chipText: {
     color: Colors.plum,
     fontSize: 12,
+    fontWeight: "500",
+  },
+  deleteAction: {
+    backgroundColor: Colors.expense,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 70,
+    borderRadius: 12,
+    marginLeft: 4,
+  },
+  clearFiltersButton: {
+    marginTop: 16,
+    backgroundColor: Colors.plum,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  clearFiltersText: {
+    color: Colors.surface,
+    fontSize: 14,
     fontWeight: "500",
   },
 });
