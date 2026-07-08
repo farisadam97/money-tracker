@@ -1,5 +1,11 @@
 import { useRouter } from "expo-router";
-import { Inbox, Search, SlidersHorizontal, Trash2, X } from "lucide-react-native";
+import {
+  Inbox,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  X,
+} from "lucide-react-native";
 import { useMemo, useRef, useState } from "react";
 import {
   ScrollView,
@@ -9,13 +15,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Swipeable, type SwipeableRef } from "react-native-gesture-handler";
+import { Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
+import { Toast } from "@/src/components/shared/toast";
 import { FilterSheet } from "@/src/components/transactions/filter-sheet";
 import { TransactionDetailSheet } from "@/src/components/transactions/transaction-detail-sheet";
-import { Toast } from "@/src/components/shared/toast";
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
 import { resolveIcon } from "@/src/constants/icon-map";
@@ -30,7 +36,6 @@ import {
   type TransactionRow,
   FILTER_TABS,
   FILTER_TAB_LABELS,
-  FilterTab,
 } from "@/src/types/database";
 
 export default function TransactionsScreen() {
@@ -61,9 +66,14 @@ export default function TransactionsScreen() {
 
   // Toast state
   const [toastMessage, setToastMessage] = useState("");
-  const [toastVariant, setToastVariant] = useState<"success" | "error">("success");
+  const [toastVariant, setToastVariant] = useState<"success" | "error">(
+    "success",
+  );
   const [toastVisible, setToastVisible] = useState(false);
-  const showToast = (message: string, variant: "success" | "error" = "success") => {
+  const showToast = (
+    message: string,
+    variant: "success" | "error" = "success",
+  ) => {
     setToastMessage(message);
     setToastVariant(variant);
     setToastVisible(true);
@@ -113,6 +123,8 @@ export default function TransactionsScreen() {
   const grouped = useMemo(() => groupByDate(filtered), [filtered]);
 
   const categoryName = (catId: string) => getCatName(catId, categories);
+  const categoryIcon = (catId: string) =>
+    categories?.find((c) => c.id === catId)?.icon ?? "Tag";
 
   // Build active filter chips data
   const activeChips = useMemo(() => {
@@ -125,9 +137,17 @@ export default function TransactionsScreen() {
     }
     if (dateFrom || dateTo) {
       const fmt = (d: string) =>
-        new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+        new Date(d + "T00:00:00").toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+        });
       chips.push({
-        label: dateFrom && dateTo ? `${fmt(dateFrom)} – ${fmt(dateTo)}` : dateFrom ? `From ${fmt(dateFrom)}` : `Until ${fmt(dateTo!)}`,
+        label:
+          dateFrom && dateTo
+            ? `${fmt(dateFrom)} – ${fmt(dateTo)}`
+            : dateFrom
+              ? `From ${fmt(dateFrom)}`
+              : `Until ${fmt(dateTo!)}`,
         onRemove: () => setDateRange(null, null),
       });
     }
@@ -135,189 +155,206 @@ export default function TransactionsScreen() {
   }, [categoryIds, dateFrom, dateTo, clearCategories, setDateRange]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-      {/* Title + filter icon */}
-      <View style={styles.titleRow}>
-        <Text style={styles.screenTitle}>Transactions</Text>
-        <TouchableOpacity
-          onPress={() => setFilterSheetVisible(true)}
-          style={styles.filterIconButton}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <SlidersHorizontal size={20} color={Colors.textSecondary} strokeWidth={2} />
-          {hasActiveFilters() ? <View style={styles.filterDotBadge} /> : null}
-        </TouchableOpacity>
-      </View>
-
-      {/* Search bar */}
-      <View style={styles.searchContainer}>
-        <Search
-          size={16}
-          color={Colors.textSecondary}
-          strokeWidth={2}
-          style={{ marginLeft: 4 }}
-        />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search transactions"
-          placeholderTextColor={Colors.textSecondary}
-          style={styles.searchInput}
-        />
-        {search.trim() ? (
-          <TouchableOpacity onPress={() => setSearch("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <X size={16} color={Colors.textSecondary} strokeWidth={2} />
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
-      {/* Quick type tabs */}
-      <View style={styles.filterContainer}>
-        {FILTER_TABS.map((tab) => (
+    <ScreenEntrance>
+      <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+        {/* Title + filter icon */}
+        <View style={styles.titleRow}>
+          <Text style={styles.screenTitle}>Transactions</Text>
           <TouchableOpacity
-            key={tab}
-            onPress={() => setType(tab as typeof type)}
-            style={[styles.filterTab, type === tab && styles.filterTabActive]}
+            onPress={() => setFilterSheetVisible(true)}
+            style={styles.filterIconButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text
-              style={[
-                styles.filterTabText,
-                type === tab && styles.filterTabTextActive,
-              ]}
-            >
-              {FILTER_TAB_LABELS[tab]}
-            </Text>
+            <SlidersHorizontal
+              size={20}
+              color={Colors.textSecondary}
+              strokeWidth={2}
+            />
+            {hasActiveFilters() ? <View style={styles.filterDotBadge} /> : null}
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
 
-      {/* Active filter chips */}
-      {activeChips.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chipsContent}
-        >
-          {activeChips.map((chip, i) => (
+        {/* Search bar */}
+        <View style={styles.searchContainer}>
+          <Search
+            size={16}
+            color={Colors.textSecondary}
+            strokeWidth={2}
+            style={{ marginLeft: 4 }}
+          />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search transactions"
+            placeholderTextColor={Colors.textSecondary}
+            style={styles.searchInput}
+          />
+          {search.trim() ? (
             <TouchableOpacity
-              key={i}
-              onPress={chip.onRemove}
-              style={styles.chip}
+              onPress={() => setSearch("")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.chipText}>{chip.label}</Text>
-              <X size={12} color={Colors.plum} strokeWidth={2.5} />
+              <X size={16} color={Colors.textSecondary} strokeWidth={2} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Quick type tabs */}
+        <View style={styles.filterContainer}>
+          {FILTER_TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setType(tab as typeof type)}
+              style={[styles.filterTab, type === tab && styles.filterTabActive]}
+            >
+              <Text
+                style={[
+                  styles.filterTabText,
+                  type === tab && styles.filterTabTextActive,
+                ]}
+              >
+                {FILTER_TAB_LABELS[tab]}
+              </Text>
             </TouchableOpacity>
           ))}
-        </ScrollView>
-      ) : null}
+        </View>
 
-      {/* Transactions list */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: insets.bottom + 100,
-        }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {isLoading ? (
-          <View style={{ paddingHorizontal: 16 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <View key={i} style={styles.skeletonRow}>
-                <View style={styles.skeletonAvatar} />
-                <View style={{ flex: 1 }}>
-                  <View style={styles.skeletonLine} />
-                  <View style={[styles.skeletonLine, { width: "60%", marginTop: 6 }]} />
-                </View>
-                <View style={[styles.skeletonLine, { width: 60 }]} />
-              </View>
-            ))}
-          </View>
-        ) : grouped.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Inbox size={40} color={Colors.textSecondary} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>
-              {hasActiveFilters() ? "No transactions found" : "No transactions yet"}
-            </Text>
-            <Text style={styles.emptyText}>
-              {hasActiveFilters()
-                ? "Try adjusting your filters"
-                : "Tap + to add your first transaction"}
-            </Text>
-            {hasActiveFilters() ? (
+        {/* Active filter chips */}
+        {activeChips.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipsScroll}
+            contentContainerStyle={styles.chipsContent}
+          >
+            {activeChips.map((chip, i) => (
               <TouchableOpacity
-                onPress={resetFilters}
-                style={styles.clearFiltersButton}
+                key={i}
+                onPress={chip.onRemove}
+                style={styles.chip}
               >
-                <Text style={styles.clearFiltersText}>Clear Filters</Text>
+                <Text style={styles.chipText}>{chip.label}</Text>
+                <X size={12} color={Colors.plum} strokeWidth={2.5} />
               </TouchableOpacity>
-            ) : null}
-          </View>
-        ) : (
-          grouped.map((group) => (
-            <View key={group.dateKey} style={{ marginBottom: 20 }}>
-              {/* Date header */}
-              <Text style={styles.dateHeader}>{group.label}</Text>
+            ))}
+          </ScrollView>
+        ) : null}
 
-              {/* Transactions for this date */}
-              <View style={styles.dateGroup}>
-                {group.items.map((txn) => (
-                  <TransactionRowItem
-                    key={txn.id}
-                    transaction={txn}
-                    categoryName={categoryName(txn.category_id)}
-                    onPress={() => setSelectedId(txn.id)}
-                    onDelete={() => {
-                      deleteTransaction.mutate(txn.id, {
-                        onSuccess: () => showToast("Transaction deleted"),
-                        onError: () => showToast("Failed to delete", "error"),
-                      });
-                    }}
-                  />
-                ))}
-              </View>
+        {/* Transactions list */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: insets.bottom + 100,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {isLoading ? (
+            <View style={{ paddingHorizontal: 16 }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View key={i} style={styles.skeletonRow}>
+                  <View style={styles.skeletonAvatar} />
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.skeletonLine} />
+                    <View
+                      style={[
+                        styles.skeletonLine,
+                        { width: "60%", marginTop: 6 },
+                      ]}
+                    />
+                  </View>
+                  <View style={[styles.skeletonLine, { width: 60 }]} />
+                </View>
+              ))}
             </View>
-          ))
-        )}
-      </ScrollView>
+          ) : grouped.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Inbox size={40} color={Colors.textSecondary} strokeWidth={1.5} />
+              <Text style={styles.emptyTitle}>
+                {hasActiveFilters()
+                  ? "No transactions found"
+                  : "No transactions yet"}
+              </Text>
+              <Text style={styles.emptyText}>
+                {hasActiveFilters()
+                  ? "Try adjusting your filters"
+                  : "Tap + to add your first transaction"}
+              </Text>
+              {hasActiveFilters() ? (
+                <TouchableOpacity
+                  onPress={resetFilters}
+                  style={styles.clearFiltersButton}
+                >
+                  <Text style={styles.clearFiltersText}>Clear Filters</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : (
+            grouped.map((group) => (
+              <View key={group.dateKey} style={{ marginBottom: 20 }}>
+                {/* Date header */}
+                <Text style={styles.dateHeader}>{group.label}</Text>
 
-      {/* Transaction detail bottom sheet */}
-      <TransactionDetailSheet
-        visible={selectedId !== null}
-        transaction={selectedTxn}
-        category={selectedCategory}
-        onClose={() => setSelectedId(null)}
-        onEdit={(t) => {
-          setSelectedId(null);
-          router.push({
-            pathname: "/add-transaction",
-            params: { id: t.id },
-          } as never);
-        }}
-        onDelete={(id) => {
-          deleteTransaction.mutate(id, {
-            onSuccess: () => showToast("Transaction deleted"),
-            onError: () => showToast("Failed to delete", "error"),
-          });
-        }}
-      />
+                {/* Transactions for this date */}
+                <View style={styles.dateGroup}>
+                  {group.items.map((txn) => (
+                    <TransactionRowItem
+                      key={txn.id}
+                      transaction={txn}
+                      categoryName={categoryName(txn.category_id)}
+                      categoryIcon={categoryIcon(txn.category_id)}
+                      onPress={() => setSelectedId(txn.id)}
+                      onDelete={() => {
+                        deleteTransaction.mutate(txn.id, {
+                          onSuccess: () => showToast("Transaction deleted"),
+                          onError: () => showToast("Failed to delete", "error"),
+                        });
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+            ))
+          )}
+        </ScrollView>
 
-      {/* Filter bottom sheet */}
-      <FilterSheet
-        visible={filterSheetVisible}
-        onClose={() => setFilterSheetVisible(false)}
-      />
+        {/* Transaction detail bottom sheet */}
+        <TransactionDetailSheet
+          visible={selectedId !== null}
+          transaction={selectedTxn}
+          category={selectedCategory}
+          onClose={() => setSelectedId(null)}
+          onEdit={(t) => {
+            setSelectedId(null);
+            router.push({
+              pathname: "/add-transaction",
+              params: { id: t.id },
+            } as never);
+          }}
+          onDelete={(id) => {
+            deleteTransaction.mutate(id, {
+              onSuccess: () => showToast("Transaction deleted"),
+              onError: () => showToast("Failed to delete", "error"),
+            });
+          }}
+        />
 
-      {/* Toast */}
-      <Toast
-        message={toastMessage}
-        variant={toastVariant}
-        visible={toastVisible}
-        onDismiss={() => setToastVisible(false)}
-      />
-    </View>
+        {/* Filter bottom sheet */}
+        <FilterSheet
+          visible={filterSheetVisible}
+          onClose={() => setFilterSheetVisible(false)}
+        />
+
+        {/* Toast */}
+        <Toast
+          message={toastMessage}
+          variant={toastVariant}
+          visible={toastVisible}
+          onDismiss={() => setToastVisible(false)}
+        />
+      </View>
+    </ScreenEntrance>
   );
 }
 
@@ -326,18 +363,20 @@ export default function TransactionsScreen() {
 function TransactionRowItem({
   transaction,
   categoryName,
+  categoryIcon,
   onPress,
   onDelete,
 }: {
   transaction: TransactionRow;
   categoryName: string;
+  categoryIcon?: string;
   onPress?: () => void;
   onDelete?: () => void;
 }) {
   const colors = getCategoryColors(categoryName);
-  const Icon = resolveIcon(categoryName === "Other" ? "Tag" : categoryName);
+  const Icon = resolveIcon(categoryIcon ?? "Tag");
   const isIncome = transaction.type === "income";
-  const swipeRef = useRef<SwipeableRef>(null);
+  const swipeRef = useRef<InstanceType<typeof Swipeable>>(null);
 
   const renderRightActions = () => {
     if (!onDelete) return null;
@@ -427,7 +466,10 @@ function groupByDate(transactions: TransactionRow[]): DateGroup[] {
     .map(([dateKey, items]) => ({
       dateKey,
       label: formatDateHeader(dateKey),
-      items,
+      items: items.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ),
     }));
 }
 

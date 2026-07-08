@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SpendingByCategory } from "@/src/components/home/spending-by-category";
@@ -18,6 +19,8 @@ import { Colors } from "@/src/constants/colors";
 import { resolveIcon } from "@/src/constants/icon-map";
 import { useAuth } from "@/src/hooks/use-auth";
 import { useCategoriesQuery } from "@/src/hooks/use-categories";
+import { useStaggeredEntrance } from "@/src/hooks/use-entrance-animation";
+import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
 import { useDeleteTransaction, useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
 import type { CategoryRow, TransactionRow } from "@/src/types/database";
 import { useState } from "react";
@@ -71,8 +74,11 @@ export default function HomeScreen() {
 
   const categoryName = (catId: string) =>
     categories?.find((c) => c.id === catId)?.name ?? "Other";
+  const categoryIcon = (catId: string) =>
+    categories?.find((c) => c.id === catId)?.icon ?? "Tag";
 
   return (
+    <ScreenEntrance>
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       {/* Greeting */}
       <View style={styles.greetingRow}>
@@ -222,12 +228,14 @@ export default function HomeScreen() {
             ) : (
               monthTransactions
                 .slice(0, 5)
-                .map((txn) => (
+                .map((txn, i) => (
                   <TransactionRow
                     key={txn.id}
                     transaction={txn}
                     categoryName={categoryName(txn.category_id)}
+                    categoryIcon={categoryIcon(txn.category_id)}
                     onPress={() => setSelectedId(txn.id)}
+                    index={i}
                   />
                 ))
             )}
@@ -264,6 +272,7 @@ export default function HomeScreen() {
         onDismiss={() => setToastVisible(false)}
       />
     </View>
+    </ScreenEntrance>
   );
 }
 
@@ -272,47 +281,54 @@ export default function HomeScreen() {
 function TransactionRow({
   transaction,
   categoryName,
+  categoryIcon = "Tag",
   onPress,
+  index = 0,
 }: {
   transaction: TransactionRow;
   categoryName: string;
+  categoryIcon?: string;
   onPress?: () => void;
+  index?: number;
 }) {
   const colors = getCategoryColors(categoryName);
-  const Icon = resolveIcon(categoryName === "Other" ? "Tag" : categoryName);
+  const Icon = resolveIcon(categoryIcon);
   const isIncome = transaction.type === "income";
+  const animStyle = useStaggeredEntrance(index);
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.txnRow}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.txnAvatar, { backgroundColor: colors.bg }]}>
-        <Icon size={18} color={colors.icon} strokeWidth={2} />
-      </View>
-      <View style={styles.txnInfo}>
-        <Text style={styles.txnCategory} numberOfLines={1}>
-          {categoryName}
-        </Text>
-        {transaction.note ? (
-          <Text style={styles.txnNote} numberOfLines={1}>
-            {transaction.note}
+    <Animated.View style={[animStyle]}>
+      <TouchableOpacity
+        onPress={onPress}
+        style={styles.txnRow}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.txnAvatar, { backgroundColor: colors.bg }]}>
+          <Icon size={18} color={colors.icon} strokeWidth={2} />
+        </View>
+        <View style={styles.txnInfo}>
+          <Text style={styles.txnCategory} numberOfLines={1}>
+            {categoryName}
           </Text>
-        ) : null}
-      </View>
-      <View style={styles.txnRight}>
-        <Text
-          style={[
-            styles.txnAmount,
-            { color: isIncome ? Colors.income : Colors.expense },
-          ]}
-        >
-          {isIncome ? "+" : "−"}
-          {formatCurrency(Number(transaction.amount))}
+          {transaction.note ? (
+            <Text style={styles.txnNote} numberOfLines={1}>
+              {transaction.note}
+            </Text>
+          ) : null}
+        </View>
+        <View style={styles.txnRight}>
+          <Text
+            style={[
+              styles.txnAmount,
+              { color: isIncome ? Colors.income : Colors.expense },
+            ]}
+          >
+            {isIncome ? "+" : "−"}
+            {formatCurrency(Number(transaction.amount))}
         </Text>
-      </View>
-    </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 

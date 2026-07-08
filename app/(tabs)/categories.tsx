@@ -15,6 +15,7 @@ import {
 } from "@/src/hooks/use-categories";
 import { CategoryCard, CARD_WIDTH } from "@/src/components/categories/category-card";
 import { CategoryFormSheet } from "@/src/components/categories/category-form-sheet";
+import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
 import type { CategoryRow } from "@/src/types/database";
 
 const GAP = 10;
@@ -67,6 +68,7 @@ export default function CategoriesScreen() {
   }
 
   return (
+    <ScreenEntrance>
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       {/* Header with title + add button */}
       <View style={styles.header}>
@@ -152,6 +154,7 @@ export default function CategoriesScreen() {
         onClose={() => setFormVisible(false)}
       />
     </View>
+    </ScreenEntrance>
   );
 }
 

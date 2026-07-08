@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmDialog } from "@/src/components/shared/confirm-dialog";
 import { Colors } from "@/src/constants/colors";
 import { useAuth } from "@/src/hooks/use-auth";
+import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
 import { useUserPreferencesStore } from "@/src/stores/user-preferences-store";
 import { useState } from "react";
 
@@ -43,6 +44,7 @@ export default function ProfileScreen() {
     .toUpperCase();
 
   return (
+    <ScreenEntrance>
     <ScrollView
       style={[styles.container, { paddingTop: insets.top + 12 }]}
       contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
@@ -115,6 +117,7 @@ export default function ProfileScreen() {
         onCancel={() => setShowSignOutConfirm(false)}
       />
     </ScrollView>
+    </ScreenEntrance>
   );
 }
 

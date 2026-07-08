@@ -2,8 +2,10 @@ import {
   UtensilsCrossed,
   Car,
   ShoppingBag,
+  ShoppingCart,
   Heart,
   Film,
+  Tv,
   Receipt,
   Wallet,
   Tag,
@@ -29,6 +31,7 @@ import {
   Home as HomeIcon,
   Music,
   Camera,
+  MoreHorizontal,
   type LucideIcon,
 } from "lucide-react-native";
 
@@ -40,8 +43,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
   UtensilsCrossed,
   Car,
   ShoppingBag,
+  ShoppingCart,
   Heart,
   Film,
+  Tv,
   Receipt,
   Wallet,
   Tag,
@@ -67,6 +72,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Home: HomeIcon,
   Music,
   Camera,
+  MoreHorizontal,
 };
 
 /** All icon names available for the icon picker (min 30 per PRD). */

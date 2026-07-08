@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { CalendarDays, Check, type LucideIcon } from "lucide-react-native";
-import DatePicker, { type DatePickerProps } from "react-native-date-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
@@ -70,12 +70,12 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
     onClose();
   };
 
-  const handleDatePick = (date: Date | undefined) => {
-    if (!date || !datePickerOpen) {
+  const handleDatePick = (_event: unknown, selectedDate?: Date) => {
+    if (!selectedDate || !datePickerOpen) {
       setDatePickerOpen(null);
       return;
     }
-    const iso = date.toISOString().slice(0, 10);
+    const iso = selectedDate.toISOString().slice(0, 10);
     if (datePickerOpen === "from") {
       setDateRange(iso, dateTo);
     } else {
@@ -189,20 +189,20 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
       </Modal>
 
       {/* Date picker */}
-      <DatePicker
-        modal
-        open={datePickerOpen !== null}
-        date={
-          datePickerOpen === "from" && dateFrom
-            ? new Date(dateFrom + "T00:00:00")
-            : datePickerOpen === "to" && dateTo
-              ? new Date(dateTo + "T00:00:00")
-              : new Date()
-        }
-        mode="date"
-        onConfirm={handleDatePick}
-        onCancel={() => setDatePickerOpen(null)}
-      />
+      {datePickerOpen !== null ? (
+        <DateTimePicker
+          value={
+            datePickerOpen === "from" && dateFrom
+              ? new Date(dateFrom + "T00:00:00")
+              : datePickerOpen === "to" && dateTo
+                ? new Date(dateTo + "T00:00:00")
+                : new Date()
+          }
+          mode="date"
+          display="spinner"
+          onChange={handleDatePick}
+        />
+      ) : null}
     </>
   );
 }

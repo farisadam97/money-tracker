@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import DatePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ConfirmDialog } from "@/src/components/shared/confirm-dialog";
@@ -95,6 +96,7 @@ export default function AddTransactionScreen({
   const [note, setNote] = useState(transaction?.note ?? "");
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Toast state
   const [toastMessage, setToastMessage] = useState("");
@@ -282,14 +284,19 @@ export default function AddTransactionScreen({
             onPress={() => setShowCategoryPicker(true)}
           />
 
-          {/* Date row — display only for Phase 1 (native picker needs dev build) */}
-          <FormRow
-            icon={CalendarDays}
-            iconBg={Colors.plumTint}
-            iconColor={Colors.plum}
-            label="Date"
-            value={formatDate(date)}
-          />
+          {/* Date row */}
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.7}
+          >
+            <FormRow
+              icon={CalendarDays}
+              iconBg={Colors.plumTint}
+              iconColor={Colors.plum}
+              label="Date"
+              value={formatDate(date)}
+            />
+          </TouchableOpacity>
 
           {/* Note row */}
           <View style={styles.noteRow}>
@@ -354,6 +361,22 @@ export default function AddTransactionScreen({
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteConfirm(false)}
       />
+
+      {/* Date picker */}
+      {showDatePicker ? (
+        <DatePicker
+          value={new Date(date + "T00:00:00")}
+          mode="date"
+          maximumDate={new Date()}
+          display="spinner"
+          onChange={(_event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              setDate(selectedDate.toISOString().slice(0, 10));
+            }
+          }}
+        />
+      ) : null}
 
       {/* Toast */}
       <Toast

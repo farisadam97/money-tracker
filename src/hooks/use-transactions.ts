@@ -10,6 +10,7 @@ import type {
 import type { TransactionFilter } from "@/src/stores/filter-store";
 
 const TRANSACTIONS_KEY = ["transactions"] as const;
+const SUMMARY_KEY = ["summary"] as const;
 
 /**
  * Applies TransactionFilter state to a Supabase query.
@@ -104,7 +105,10 @@ export function useCreateTransaction() {
         throw err;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      qc.invalidateQueries({ queryKey: SUMMARY_KEY });
+    },
   });
 }
 
@@ -134,7 +138,10 @@ export function useUpdateTransaction() {
         throw err;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      qc.invalidateQueries({ queryKey: SUMMARY_KEY });
+    },
   });
 }
 
@@ -159,6 +166,9 @@ export function useDeleteTransaction() {
         throw err;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+      qc.invalidateQueries({ queryKey: SUMMARY_KEY });
+    },
   });
 }
