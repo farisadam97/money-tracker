@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { CalendarDays, Check, type LucideIcon } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { BlurView } from "expo-blur";
 
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
@@ -95,7 +96,7 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
         onRequestClose={onClose}
       >
         <Pressable style={styles.backdrop} onPress={onClose}>
-          <View style={{ flex: 1 }} />
+          <BlurView intensity={25} tint="dark" style={{ flex: 1 }} />
         </Pressable>
 
         <View style={styles.sheet}>
@@ -280,7 +281,6 @@ function DateField({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(28, 15, 46, 0.5)",
   },
   sheet: {
     backgroundColor: Colors.surface,

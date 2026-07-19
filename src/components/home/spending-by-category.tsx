@@ -32,7 +32,7 @@ export function SpendingByCategory() {
         <Text style={styles.sectionTitle}>Spending by Category</Text>
         <Text
           style={styles.seeAll}
-          onPress={() => router.push("/(tabs)/categories" as never)}
+          onPress={() => router.push("/(tabs)/transactions" as never)}
         >
           See all
         </Text>

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react-native";
 import {
   LayoutChangeEvent,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,16 +25,26 @@ import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
 import { useDeleteTransaction, useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
 import type { CategoryRow, TransactionRow } from "@/src/types/database";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { data: transactions, isLoading } = useRecentTransactionsQuery(10);
+  const { data: transactions, isLoading, isRefetching } = useRecentTransactionsQuery(10);
   const { data: categories } = useCategoriesQuery();
   const deleteTransaction = useDeleteTransaction();
+  const queryClient = useQueryClient();
   const [sectionsHeight, setSectionsHeight] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+      queryClient.invalidateQueries({ queryKey: ["summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["categories"] }),
+    ]);
+  };
 
   // Toast state
   const [toastMessage, setToastMessage] = useState("");
@@ -76,6 +87,41 @@ export default function HomeScreen() {
     categories?.find((c) => c.id === catId)?.name ?? "Other";
   const categoryIcon = (catId: string) =>
     categories?.find((c) => c.id === catId)?.icon ?? "Tag";
+
+  if (isLoading) {
+    return (
+      <ScreenEntrance>
+        <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+          {/* Balance skeleton */}
+          <View style={styles.balanceCard}>
+            <View style={styles.balanceHeaderRow}>
+              <View style={[styles.skeletonBlock, { width: 140, height: 12 }]} />
+              <View style={[styles.skeletonBlock, { width: 70, height: 12 }]} />
+            </View>
+            <View style={[styles.skeletonBlock, { width: 180, height: 36, marginTop: 12 }]} />
+            <View style={[styles.incomeExpenseRow, { marginTop: 20 }]}>
+              <View style={[styles.skeletonBlock, { width: 100, height: 40, borderRadius: 8 }]} />
+              <View style={[styles.skeletonBlock, { width: 100, height: 40, borderRadius: 8 }]} />
+            </View>
+          </View>
+
+          {/* Recent transactions skeleton */}
+          <View style={{ flex: 1, marginTop: 16 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <View key={i} style={styles.skeletonRow}>
+                <View style={[styles.skeletonBlock, { width: 40, height: 40, borderRadius: 20 }]} />
+                <View style={{ flex: 1 }}>
+                  <View style={[styles.skeletonBlock, { width: "50%", height: 14 }]} />
+                  <View style={[styles.skeletonBlock, { width: "30%", height: 12, marginTop: 6 }]} />
+                </View>
+                <View style={[styles.skeletonBlock, { width: 70, height: 14 }]} />
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScreenEntrance>
+    );
+  }
 
   return (
     <ScreenEntrance>
@@ -217,8 +263,27 @@ export default function HomeScreen() {
             contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={handleRefresh}
+                tintColor={Colors.plum}
+                colors={[Colors.plum]}
+              />
+            }
           >
-            {monthTransactions.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <View key={i} style={styles.skeletonRow}>
+                  <View style={[styles.skeletonBlock, { width: 40, height: 40, borderRadius: 20 }]} />
+                  <View style={{ flex: 1 }}>
+                    <View style={[styles.skeletonBlock, { width: "50%", height: 14 }]} />
+                    <View style={[styles.skeletonBlock, { width: "30%", height: 12, marginTop: 6 }]} />
+                  </View>
+                  <View style={[styles.skeletonBlock, { width: 70, height: 14 }]} />
+                </View>
+              ))
+            ) : monthTransactions.length === 0 ? (
               <View style={styles.listEmptyState}>
                 <Text style={styles.emptyTitle}>No transactions yet</Text>
                 <Text style={styles.emptyText}>
@@ -341,6 +406,17 @@ function formatCurrency(amount: number): string {
 // --- Styles ---
 
 const styles = StyleSheet.create({
+  skeletonBlock: {
+    backgroundColor: Colors.border,
+    borderRadius: 4,
+    opacity: 0.5,
+  },
+  skeletonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.parchment,

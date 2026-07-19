@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView, Pressable } from "react-native";
+import { BlurView } from "expo-blur";
 import { Check, Trash2 } from "lucide-react-native";
 
 import { Colors } from "@/src/constants/colors";
@@ -52,7 +53,7 @@ export function CategoryFormSheet({
     <>
       <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
         <Pressable style={{ flex: 1 }} onPress={onClose}>
-          <View style={{ flex: 1, justifyContent: "flex-end" }} />
+          <BlurView intensity={25} tint="dark" style={{ flex: 1 }} />
         </Pressable>
         <View
           style={{

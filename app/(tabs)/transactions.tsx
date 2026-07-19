@@ -6,8 +6,9 @@ import {
   Trash2,
   X,
 } from "lucide-react-native";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +17,12 @@ import {
   View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
@@ -30,12 +37,13 @@ import {
   useDeleteTransaction,
   useTransactionsQuery,
 } from "@/src/hooks/use-transactions";
-import { useFilterStore } from "@/src/stores/filter-store";
+import { useFilterStore, type FilterType } from "@/src/stores/filter-store";
 import {
-  type CategoryRow,
-  type TransactionRow,
   FILTER_TABS,
   FILTER_TAB_LABELS,
+  type CategoryRow,
+  type FilterTab,
+  type TransactionRow,
 } from "@/src/types/database";
 
 export default function TransactionsScreen() {
@@ -57,7 +65,7 @@ export default function TransactionsScreen() {
     hasActiveFilters,
   } = useFilterStore();
 
-  const { data: transactions, isLoading } = useTransactionsQuery();
+  const { data: transactions, isLoading, refetch, isRefetching } = useTransactionsQuery();
   const { data: categories } = useCategoriesQuery();
   const deleteTransaction = useDeleteTransaction();
 
@@ -200,24 +208,7 @@ export default function TransactionsScreen() {
         </View>
 
         {/* Quick type tabs */}
-        <View style={styles.filterContainer}>
-          {FILTER_TABS.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              onPress={() => setType(tab as typeof type)}
-              style={[styles.filterTab, type === tab && styles.filterTabActive]}
-            >
-              <Text
-                style={[
-                  styles.filterTabText,
-                  type === tab && styles.filterTabTextActive,
-                ]}
-              >
-                {FILTER_TAB_LABELS[tab]}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <FilterTabs type={type} setType={setType} />
 
         {/* Active filter chips */}
         {activeChips.length > 0 ? (
@@ -249,6 +240,14 @@ export default function TransactionsScreen() {
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={() => refetch()}
+              tintColor={Colors.plum}
+              colors={[Colors.plum]}
+            />
+          }
         >
           {isLoading ? (
             <View style={{ paddingHorizontal: 16 }}>
@@ -355,6 +354,76 @@ export default function TransactionsScreen() {
         />
       </View>
     </ScreenEntrance>
+  );
+}
+
+// --- Animated Filter Tabs ---
+
+function FilterTabs({
+  type,
+  setType,
+}: {
+  type: FilterType;
+  setType: (t: FilterType) => void;
+}) {
+  const [tabWidth, setTabWidth] = useState(0);
+  const translateX = useSharedValue(0);
+
+  const activeIndex = Math.max(0, FILTER_TABS.indexOf(type as FilterTab));
+
+  useEffect(() => {
+    if (tabWidth > 0) {
+      translateX.value = withTiming(activeIndex * tabWidth, {
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
+      });
+    }
+  }, [activeIndex, tabWidth, translateX]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  return (
+    <View
+      style={styles.filterContainer}
+      onLayout={(e) =>
+        setTabWidth(e.nativeEvent.layout.width / FILTER_TABS.length)
+      }
+    >
+      {/* Sliding indicator */}
+      {tabWidth > 0 ? (
+        <Animated.View
+          style={[
+            styles.filterTabIndicator,
+            { width: tabWidth },
+            indicatorStyle,
+          ]}
+        />
+      ) : null}
+
+      {/* Tabs */}
+      {FILTER_TABS.map((tab) => {
+        const isActive = type === tab;
+        return (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setType(tab as FilterType)}
+            style={styles.filterTab}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                isActive && styles.filterTabTextActive,
+              ]}
+            >
+              {FILTER_TAB_LABELS[tab]}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
@@ -556,19 +625,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 16,
   },
-  filterTab: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: "center",
-    borderRadius: 9,
-  },
-  filterTabActive: {
+  filterTabIndicator: {
+    position: "absolute",
+    top: 3,
+    bottom: 3,
+    left: 3,
     backgroundColor: Colors.surface,
+    borderRadius: 9,
     shadowColor: Colors.plum,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 2,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: "center",
+    borderRadius: 9,
+    zIndex: 1,
   },
   filterTabText: {
     color: Colors.textSecondary,

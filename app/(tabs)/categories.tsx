@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Inbox, Plus } from "lucide-react-native";
 
@@ -23,7 +23,7 @@ const GAP = 10;
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { data: categories, isLoading } = useCategoriesQuery();
+  const { data: categories, isLoading, refetch, isRefetching } = useCategoriesQuery();
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
@@ -84,6 +84,14 @@ export default function CategoriesScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+            tintColor={Colors.plum}
+            colors={[Colors.plum]}
+          />
+        }
       >
         {/* DEFAULT CATEGORIES */}
         <View style={styles.section}>

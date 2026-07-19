@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BlurView } from "expo-blur";
 import { PencilLine, Trash2, type LucideIcon } from "lucide-react-native";
 
 import { getCategoryColors } from "@/src/constants/categories";
@@ -96,7 +97,11 @@ export function TransactionDetailSheet({
         onRequestClose={onClose}
       >
         <Pressable style={styles.backdrop} onPress={onClose}>
-          <View style={{ flex: 1 }} />
+          <BlurView
+            intensity={25}
+            tint="dark"
+            style={{ flex: 1 }}
+          />
         </Pressable>
 
         <View style={styles.sheet}>
@@ -256,7 +261,6 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(28, 15, 46, 0.5)",
   },
   sheet: {
     backgroundColor: Colors.surface,
