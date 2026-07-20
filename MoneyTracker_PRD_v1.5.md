@@ -298,7 +298,7 @@ Tab: Profile → Transaction Import Settings
 
 - Period: This Month — fixed for Phase 1, no selector
 - 3 summary cards at top: Total Income (green), Total Expense (red), Balance (plum)
-- Spending by category: list with category icon, name, amount, percentage bar
+- Spending by category: list with category icon, name, amount, percentage bar. Tap a category row → Transactions tab pre-filtered to that category (drill-down). "See all" link → Transactions tab unfiltered.
 - Recent transactions: last 5, each row shows icon, category, note, amount, date
 - Tap any transaction row opens Transaction Bottom Sheet
 
@@ -310,7 +310,7 @@ Tab: Profile → Transaction Import Settings
 - Each row: colored circle avatar with Lucide category icon, category name, note preview, amount (red/green), date
 - Email-imported transactions show a small email icon badge
 - Unclassified email transactions show an orange warning badge — tap to edit
-- Infinite scroll with loading indicator
+- Infinite scroll with loading indicator (20 rows per page, fetched on demand as user nears the bottom)
 - Empty state illustration when no transactions
 
 #### Add Transaction (FAB Full Screen)

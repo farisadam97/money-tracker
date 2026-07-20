@@ -15,6 +15,7 @@ export interface TransactionFilter {
 export interface TransactionFilterActions {
   setType: (type: FilterType) => void;
   toggleCategory: (categoryId: string) => void;
+  setCategories: (categoryIds: string[]) => void;
   clearCategories: () => void;
   setDateRange: (from: string | null, to: string | null) => void;
   setSearch: (query: string) => void;
@@ -50,6 +51,8 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
     })),
 
   clearCategories: () => set({ categoryIds: [] }),
+
+  setCategories: (categoryIds) => set({ categoryIds }),
 
   setDateRange: (from, to) => set({ dateFrom: from, dateTo: to }),
 

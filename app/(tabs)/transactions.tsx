@@ -8,6 +8,7 @@ import {
 } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -27,6 +28,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
 import { Toast } from "@/src/components/shared/toast";
+import { ErrorState } from "@/src/components/shared/error-state";
 import { FilterSheet } from "@/src/components/transactions/filter-sheet";
 import { TransactionDetailSheet } from "@/src/components/transactions/transaction-detail-sheet";
 import { getCategoryColors } from "@/src/constants/categories";
@@ -65,7 +67,17 @@ export default function TransactionsScreen() {
     hasActiveFilters,
   } = useFilterStore();
 
-  const { data: transactions, isLoading, refetch, isRefetching } = useTransactionsQuery();
+  const {
+    data: pagedData,
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTransactionsQuery();
+  const transactions = pagedData?.pages.flat() ?? [];
   const { data: categories } = useCategoriesQuery();
   const deleteTransaction = useDeleteTransaction();
 
@@ -240,6 +252,19 @@ export default function TransactionsScreen() {
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const distanceFromBottom =
+              contentSize.height - (layoutMeasurement.height + contentOffset.y);
+            if (
+              distanceFromBottom < 400 &&
+              hasNextPage &&
+              !isFetchingNextPage
+            ) {
+              fetchNextPage();
+            }
+          }}
+          scrollEventThrottle={16}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -267,6 +292,11 @@ export default function TransactionsScreen() {
                 </View>
               ))}
             </View>
+          ) : isError ? (
+            <ErrorState
+              onRetry={() => refetch()}
+              style={{ paddingTop: 80 }}
+            />
           ) : grouped.length === 0 ? (
             <View style={styles.emptyState}>
               <Inbox size={40} color={Colors.textSecondary} strokeWidth={1.5} />
@@ -316,6 +346,13 @@ export default function TransactionsScreen() {
               </View>
             ))
           )}
+
+          {/* Infinite scroll footer */}
+          {isFetchingNextPage ? (
+            <View style={styles.listFooter}>
+              <ActivityIndicator color={Colors.plum} size="small" />
+            </View>
+          ) : null}
         </ScrollView>
 
         {/* Transaction detail bottom sheet */}
@@ -697,6 +734,11 @@ const styles = StyleSheet.create({
   txnAmount: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  listFooter: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 24,
   },
   emptyState: {
     alignItems: "center",

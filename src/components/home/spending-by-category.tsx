@@ -1,10 +1,11 @@
 import { useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { getCategoryColors } from "@/src/constants/categories";
 import { Colors } from "@/src/constants/colors";
 import { resolveIcon } from "@/src/constants/icon-map";
 import { useSummaryQuery } from "@/src/hooks/use-summary";
+import { useFilterStore } from "@/src/stores/filter-store";
 
 const MAX_ROWS = 5;
 
@@ -22,9 +23,15 @@ const MAX_ROWS = 5;
  */
 export function SpendingByCategory() {
   const router = useRouter();
+  const setCategories = useFilterStore((s) => s.setCategories);
   const { data } = useSummaryQuery();
   const rows = (data?.byCategory ?? []).slice(0, MAX_ROWS);
   const hasExpenses = rows.length > 0 && (data?.totalExpense ?? 0) > 0;
+
+  const viewCategory = (categoryId: string) => {
+    setCategories([categoryId]);
+    router.push("/(tabs)/transactions" as never);
+  };
 
   return (
     <View style={styles.container}>
@@ -53,9 +60,14 @@ export function SpendingByCategory() {
               // percentage is 0-100 with one decimal; clamp to a visible min
               const widthPct = Math.max(2, Math.min(100, item.percentage));
               return (
-                <View
+                <Pressable
                   key={item.categoryId}
-                  style={[styles.row, isLast && styles.rowLast]}
+                  style={({ pressed }) => [
+                    styles.row,
+                    isLast && styles.rowLast,
+                    pressed && styles.rowPressed,
+                  ]}
+                  onPress={() => viewCategory(item.categoryId)}
                 >
                   <View style={styles.rowTop}>
                     <View style={styles.rowLeft}>
@@ -87,7 +99,7 @@ export function SpendingByCategory() {
                       ]}
                     />
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -150,6 +162,9 @@ const styles = StyleSheet.create({
   },
   rowLast: {
     borderBottomWidth: 0,
+  },
+  rowPressed: {
+    opacity: 0.6,
   },
   rowTop: {
     flexDirection: "row",

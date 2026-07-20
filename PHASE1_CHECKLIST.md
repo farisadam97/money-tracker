@@ -426,7 +426,7 @@ Shown once immediately after first successful login, before reaching the main ap
 
 - [x] Group transactions by date with sticky headers: "Today", "Yesterday", then "Mon, 12 Jan 2026"
 - [x] Date header: 12px weight 500 `#8C7A9B`, bg `#FAF7F5`
-- [ ] Infinite scroll with loading indicator
+- [x] Infinite scroll with loading indicator (20 rows/page via useInfiniteQuery)
 - [x] Swipe left on row: reveals red Delete button
 - [x] Tap row: opens Transaction Detail Bottom Sheet
 - [x] Loading: skeleton rows in `#EAE3F0`
@@ -462,7 +462,7 @@ Shown once immediately after first successful login, before reaching the main ap
 
 ### 12b. Error Handling
 
-- [ ] Network error states (Supabase unreachable)
+- [x] Network error states (Supabase unreachable) — ErrorState component on Home, Transactions, Categories with retry button
 - [x] Empty states for all lists using shared `empty-state.tsx` component
 - [x] Loading skeletons using shared `skeleton-loader.tsx` (animated bars `#EAE3F0`, not spinners)
 - [x] Toast notifications for save/delete/error using shared `toast.tsx`
@@ -533,8 +533,8 @@ Before marking Phase 1 complete, verify each:
 - [ ] Google OAuth login works (login screen → dashboard)
 - [ ] Splash screen auto-redirects correctly (with/without session)
 - [ ] ~~"Continue as Guest" works~~ — Removed in PRD v1.3
-- [ ] Onboarding flow shown on first login only (3 screens: Welcome → Auto-Import → Manual Entry)
-- [ ] Onboarding skipped on subsequent logins
+- [x] Onboarding flow shown on first login only (3 screens: Welcome → Auto-Import → Manual Entry)
+- [x] Onboarding skipped on subsequent logins (tracked via user-preferences-store flag)
 - [ ] Can create, edit, delete transactions
 - [ ] New transactions have `source = 'manual'` by default
 - [ ] Can create, edit, delete custom categories

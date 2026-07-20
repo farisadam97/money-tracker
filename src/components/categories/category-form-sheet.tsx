@@ -52,9 +52,13 @@ export function CategoryFormSheet({
   return (
     <>
       <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-        <Pressable style={{ flex: 1 }} onPress={onClose}>
-          <BlurView intensity={25} tint="dark" style={{ flex: 1 }} />
-        </Pressable>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Pressable
+            style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
+            onPress={onClose}
+          >
+            <BlurView intensity={25} tint="dark" style={{ flex: 1 }} />
+          </Pressable>
         <View
           style={{
             backgroundColor: Colors.surface,
@@ -245,6 +249,7 @@ export function CategoryFormSheet({
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
         </View>
       </Modal>
 

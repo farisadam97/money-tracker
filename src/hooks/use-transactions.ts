@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { supabase } from "@/src/lib/supabase";
 import { usePendingWritesStore } from "@/src/stores/pending-writes-store";
@@ -9,7 +14,7 @@ import type {
 } from "@/src/types/database";
 import type { TransactionFilter } from "@/src/stores/filter-store";
 
-const TRANSACTIONS_KEY = ["transactions"] as const;
+const TRANSACTIONS_KEY = ["transactions", "v2"] as const;
 const SUMMARY_KEY = ["summary"] as const;
 
 /**
@@ -51,19 +56,30 @@ export function applyFilters(
 }
 
 /**
- * Full transaction list with optional filters.
- * Ordered by date desc.
+ * Paginated transaction list with optional filters.
+ * Ordered by date desc. Loads 20 rows per page (infinite scroll).
  */
+const PAGE_SIZE = 20;
+
 export function useTransactionsQuery(filters?: TransactionFilter) {
-  return useQuery<TransactionRow[]>({
+  return useInfiniteQuery<TransactionRow[]>({
     queryKey: [...TRANSACTIONS_KEY, filters],
-    queryFn: async () => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const from = pageParam as number;
+      const to = from + PAGE_SIZE - 1;
       let q = supabase.from("transactions").select("*");
       q = applyFilters(q, filters, "");
-      const { data, error } = await q.order("date", { ascending: false });
+      const { data, error } = await q
+        .order("date", { ascending: false })
+        .range(from, to);
       if (error) throw error;
       return (data ?? []) as TransactionRow[];
     },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage && lastPage.length === PAGE_SIZE
+        ? allPages.length * PAGE_SIZE
+        : undefined,
   });
 }
 

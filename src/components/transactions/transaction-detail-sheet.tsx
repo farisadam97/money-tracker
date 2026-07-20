@@ -96,15 +96,15 @@ export function TransactionDetailSheet({
         animationType="slide"
         onRequestClose={onClose}
       >
-        <Pressable style={styles.backdrop} onPress={onClose}>
-          <BlurView
-            intensity={25}
-            tint="dark"
-            style={{ flex: 1 }}
-          />
-        </Pressable>
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Pressable
+            style={[styles.backdrop, { position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }]}
+            onPress={onClose}
+          >
+            <BlurView intensity={25} tint="dark" style={{ flex: 1 }} />
+          </Pressable>
 
-        <View style={styles.sheet}>
+          <View style={styles.sheet}>
           {/* Drag handle */}
           <View style={styles.handle} />
 
@@ -185,6 +185,7 @@ export function TransactionDetailSheet({
               Delete Transaction
             </Text>
           </TouchableOpacity>
+        </View>
         </View>
       </Modal>
 

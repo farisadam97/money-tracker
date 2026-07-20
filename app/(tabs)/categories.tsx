@@ -16,6 +16,7 @@ import {
 import { CategoryCard, CARD_WIDTH } from "@/src/components/categories/category-card";
 import { CategoryFormSheet } from "@/src/components/categories/category-form-sheet";
 import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
+import { ErrorState } from "@/src/components/shared/error-state";
 import type { CategoryRow } from "@/src/types/database";
 
 const GAP = 10;
@@ -23,7 +24,7 @@ const GAP = 10;
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { data: categories, isLoading, refetch, isRefetching } = useCategoriesQuery();
+  const { data: categories, isLoading, isError, refetch, isRefetching } = useCategoriesQuery();
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
@@ -64,6 +65,16 @@ export default function CategoriesScreen() {
       <View style={[styles.container, { paddingTop: insets.top + 16 }, styles.center]}>
         <ActivityIndicator color={Colors.plum} />
       </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ScreenEntrance>
+        <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+          <ErrorState onRetry={() => refetch()} />
+        </View>
+      </ScreenEntrance>
     );
   }
 

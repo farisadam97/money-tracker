@@ -22,6 +22,7 @@ import { useAuth } from "@/src/hooks/use-auth";
 import { useCategoriesQuery } from "@/src/hooks/use-categories";
 import { useStaggeredEntrance } from "@/src/hooks/use-entrance-animation";
 import { ScreenEntrance } from "@/src/components/shared/screen-entrance";
+import { ErrorState } from "@/src/components/shared/error-state";
 import { useDeleteTransaction, useRecentTransactionsQuery } from "@/src/hooks/use-transactions";
 import type { CategoryRow, TransactionRow } from "@/src/types/database";
 import { useState } from "react";
@@ -31,7 +32,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { data: transactions, isLoading, isRefetching } = useRecentTransactionsQuery(10);
+  const { data: transactions, isLoading, isError, isRefetching, refetch } = useRecentTransactionsQuery(10);
   const { data: categories } = useCategoriesQuery();
   const deleteTransaction = useDeleteTransaction();
   const queryClient = useQueryClient();
@@ -40,7 +41,7 @@ export default function HomeScreen() {
 
   const handleRefresh = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["transactions"] }),
+      refetch(),
       queryClient.invalidateQueries({ queryKey: ["summary"] }),
       queryClient.invalidateQueries({ queryKey: ["categories"] }),
     ]);
@@ -118,6 +119,16 @@ export default function HomeScreen() {
               </View>
             ))}
           </View>
+        </View>
+      </ScreenEntrance>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ScreenEntrance>
+        <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+          <ErrorState onRetry={() => refetch()} />
         </View>
       </ScreenEntrance>
     );
